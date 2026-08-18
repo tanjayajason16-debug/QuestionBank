@@ -11,8 +11,9 @@ export default async function AdminLayout({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // If unauthenticated (e.g. on /admin/login), render children without admin sidebar
   if (!user) {
-    redirect('/admin/login')
+    return <>{children}</>
   }
 
   return (
