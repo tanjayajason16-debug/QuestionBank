@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -40,11 +40,16 @@ export default function QuestionsPage() {
   const [filterDifficulty, setFilterDifficulty] = useState('')
   const [page, setPage] = useState(1)
 
+  // Selection state (Gmail-style)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const selectAllCheckboxRef = useRef<HTMLInputElement>(null)
+
   // Dialogs
   const [showCreate, setShowCreate] = useState(false)
   const [editTarget, setEditTarget] = useState<QuestionWithCategory | null>(null)
   const [previewTarget, setPreviewTarget] = useState<QuestionWithCategory | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<QuestionWithCategory | null>(null)
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [showCsvImport, setShowCsvImport] = useState(false)
 
@@ -81,8 +86,42 @@ export default function QuestionsPage() {
   useEffect(() => { loadCategories() }, [loadCategories])
   useEffect(() => {
     setPage(1)
+    setSelectedIds(new Set())
   }, [search, filterCategory, filterGrade, filterDifficulty])
   useEffect(() => { loadQuestions() }, [loadQuestions])
+
+  // Manage header checkbox indeterminate state
+  const visibleIds = questions.map((q) => q.id)
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id))
+  const someVisibleSelected = visibleIds.some((id) => selectedIds.has(id)) && !allVisibleSelected
+
+  useEffect(() => {
+    if (selectAllCheckboxRef.current) {
+      selectAllCheckboxRef.current.indeterminate = someVisibleSelected
+    }
+  }, [someVisibleSelected])
+
+  function toggleSelectAll() {
+    if (allVisibleSelected) {
+      const next = new Set(selectedIds)
+      visibleIds.forEach((id) => next.delete(id))
+      setSelectedIds(next)
+    } else {
+      const next = new Set(selectedIds)
+      visibleIds.forEach((id) => next.add(id))
+      setSelectedIds(next)
+    }
+  }
+
+  function toggleSelectOne(id: string) {
+    const next = new Set(selectedIds)
+    if (next.has(id)) {
+      next.delete(id)
+    } else {
+      next.add(id)
+    }
+    setSelectedIds(next)
+  }
 
   async function handleCreate(payload: QuestionPayload) {
     setSaving(true)
@@ -125,7 +164,40 @@ export default function QuestionsPage() {
       toast.error('Gagal menghapus. Soal mungkin digunakan oleh tryout.')
     } else {
       toast.success('Soal berhasil dihapus')
+      const next = new Set(selectedIds)
+      next.delete(deleteTarget.id)
+      setSelectedIds(next)
       setDeleteTarget(null)
+      loadQuestions()
+    }
+    setDeleting(false)
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return
+    setDeleting(true)
+    const ids = Array.from(selectedIds)
+    
+    // Batch delete in chunks of 50
+    const BATCH_SIZE = 50
+    let hasError = false
+    for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+      const batch = ids.slice(i, i + BATCH_SIZE)
+      const { error } = await supabase
+        .from('questions')
+        .delete()
+        .in('id', batch)
+      if (error) {
+        hasError = true
+        toast.error(`Gagal menghapus sebagian soal: ${error.message}`)
+        break
+      }
+    }
+
+    if (!hasError) {
+      toast.success(`${ids.length} soal berhasil dihapus`)
+      setSelectedIds(new Set())
+      setShowBulkDeleteConfirm(false)
       loadQuestions()
     }
     setDeleting(false)
@@ -134,7 +206,11 @@ export default function QuestionsPage() {
   function handleExport() {
     if (questions.length === 0) { toast.error('Tidak ada data untuk diekspor'); return }
     const header = 'category,grade,difficulty,question,image_url,option_a,option_b,option_c,option_d,correct_answer,explanation'
-    const rows = questions.map((q) =>
+    const exportData = selectedIds.size > 0
+      ? questions.filter((q) => selectedIds.has(q.id))
+      : questions
+
+    const rows = exportData.map((q) =>
       [
         `"${q.categories?.name ?? ''}"`,
         q.grade,
@@ -188,7 +264,7 @@ export default function QuestionsPage() {
                 </svg>
               }
             >
-              Ekspor
+              Ekspor {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
             </Button>
             <Button
               size="sm"
@@ -204,6 +280,42 @@ export default function QuestionsPage() {
           </div>
         }
       />
+
+      {/* Bulk Action Bar (Gmail style) */}
+      {selectedIds.size > 0 && (
+        <div className="mb-4 p-3 bg-primary-50 border border-primary-200 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in duration-200">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center justify-center bg-primary-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+              {selectedIds.size}
+            </span>
+            <span className="text-sm font-medium text-primary-900">
+              soal terpilih
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Batal
+            </Button>
+            <Button
+              size="sm"
+              className="bg-red-600 hover:bg-red-700 text-white border-transparent"
+              onClick={() => setShowBulkDeleteConfirm(true)}
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              }
+            >
+              Hapus {selectedIds.size} Soal
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
@@ -243,6 +355,16 @@ export default function QuestionsPage() {
       <Table>
         <TableHead>
           <TableRow>
+            <TableHeader className="w-10">
+              <input
+                ref={selectAllCheckboxRef}
+                type="checkbox"
+                checked={allVisibleSelected}
+                onChange={toggleSelectAll}
+                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                title="Pilih semua di halaman ini"
+              />
+            </TableHeader>
             <TableHeader className="w-8">#</TableHeader>
             <TableHeader>Pertanyaan</TableHeader>
             <TableHeader>Kategori</TableHeader>
@@ -255,77 +377,91 @@ export default function QuestionsPage() {
         </TableHead>
         <TableBody>
           {loading ? (
-            <TableSkeleton rows={6} cols={8} />
+            <TableSkeleton rows={6} cols={9} />
           ) : questions.length === 0 ? (
-            <TableEmpty colSpan={8} message="Tidak ada soal" />
+            <TableEmpty colSpan={9} message="Tidak ada soal" />
           ) : (
-            questions.map((q, i) => (
-              <TableRow key={q.id}>
-                <TableCell className="text-gray-400 text-xs">
-                  {(page - 1) * PAGE_SIZE + i + 1}
-                </TableCell>
-                <TableCell className="max-w-xs">
-                  <p className="truncate text-gray-900" title={q.question}>
-                    {q.question}
-                  </p>
-                  {q.image_url && (
-                    <span className="text-xs text-blue-500 mt-0.5 block">📷 Ada gambar</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <span className="text-xs text-gray-600">{q.categories?.name}</span>
-                </TableCell>
-                <TableCell className="text-gray-600">{q.grade}</TableCell>
-                <TableCell>
-                  <DifficultyBadge difficulty={q.difficulty} />
-                </TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-100 text-green-700 text-xs font-bold">
-                    {q.correct_answer}
-                  </span>
-                </TableCell>
-                <TableCell className="text-xs text-gray-400">{formatDate(q.created_at)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    {/* Preview */}
-                    <button
-                      onClick={() => setPreviewTarget(q)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                      title="Pratinjau"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                    </button>
-                    {/* Edit */}
-                    <button
-                      onClick={() => setEditTarget(q)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                      title="Edit"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    {/* Delete */}
-                    <button
-                      onClick={() => setDeleteTarget(q)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      title="Hapus"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
+            questions.map((q, i) => {
+              const isSelected = selectedIds.has(q.id)
+              return (
+                <TableRow
+                  key={q.id}
+                  className={isSelected ? 'bg-primary-50/40 hover:bg-primary-50/60' : undefined}
+                >
+                  <TableCell className="w-10">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelectOne(q.id)}
+                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                    />
+                  </TableCell>
+                  <TableCell className="text-gray-400 text-xs">
+                    {(page - 1) * PAGE_SIZE + i + 1}
+                  </TableCell>
+                  <TableCell className="max-w-xs">
+                    <p className="truncate text-gray-900 font-medium" title={q.question}>
+                      {q.question}
+                    </p>
+                    {q.image_url && (
+                      <span className="text-xs text-blue-500 mt-0.5 block">📷 Ada gambar</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-xs text-gray-600">{q.categories?.name}</span>
+                  </TableCell>
+                  <TableCell className="text-gray-600">{q.grade}</TableCell>
+                  <TableCell>
+                    <DifficultyBadge difficulty={q.difficulty} />
+                  </TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                      {q.correct_answer}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-xs text-gray-400">{formatDate(q.created_at)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      {/* Preview */}
+                      <button
+                        onClick={() => setPreviewTarget(q)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        title="Pratinjau"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                      {/* Edit */}
+                      <button
+                        onClick={() => setEditTarget(q)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                        title="Edit"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      {/* Delete */}
+                      <button
+                        onClick={() => setDeleteTarget(q)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Hapus"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            })
           )}
         </TableBody>
       </Table>
@@ -374,7 +510,7 @@ export default function QuestionsPage() {
         {previewTarget && <QuestionPreview question={previewTarget} />}
       </Dialog>
 
-      {/* Delete Confirm */}
+      {/* Single Delete Confirm */}
       <ConfirmDialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
@@ -382,6 +518,17 @@ export default function QuestionsPage() {
         title="Hapus Soal"
         message="Hapus soal ini? Tindakan ini tidak dapat dibatalkan."
         confirmLabel="Hapus"
+        loading={deleting}
+      />
+
+      {/* Bulk Delete Confirm */}
+      <ConfirmDialog
+        open={showBulkDeleteConfirm}
+        onClose={() => setShowBulkDeleteConfirm(false)}
+        onConfirm={handleBulkDelete}
+        title={`Hapus ${selectedIds.size} Soal Terpilih`}
+        message={`Apakah Anda yakin ingin menghapus ${selectedIds.size} soal yang dipilih? Tindakan ini tidak dapat dibatalkan.`}
+        confirmLabel={`Hapus ${selectedIds.size} Soal`}
         loading={deleting}
       />
 
