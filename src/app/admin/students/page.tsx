@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { SearchInput } from '@/components/ui/SearchInput'
-import { Select } from '@/components/ui/Input'
+import { Input, Select } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Dialog, ConfirmDialog } from '@/components/ui/Dialog'
@@ -14,7 +14,7 @@ import {
 import { TableSkeleton } from '@/components/ui/LoadingSpinner'
 import { Pagination } from '@/components/ui/Pagination'
 import { toast } from '@/components/ui/Toast'
-import { formatDate } from '@/lib/utils'
+import { downloadCsv, formatDate } from '@/lib/utils'
 import type { Student } from '@/types/database'
 
 type StudentWithCount = Student & {
@@ -59,6 +59,18 @@ export default function StudentsPage() {
   // Selection state (Gmail-style)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const selectAllCheckboxRef = useRef<HTMLInputElement>(null)
+
+  // Edit Student Dialog
+  const [editTarget, setEditTarget] = useState<StudentWithCount | null>(null)
+  const [editForm, setEditForm] = useState({
+    full_name: '',
+    nis: '',
+    class: '',
+    school: '',
+    email: '',
+  })
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({})
+  const [savingEdit, setSavingEdit] = useState(false)
 
   // Delete dialogs
   const [deleteTarget, setDeleteTarget] = useState<StudentWithCount | null>(null)
@@ -230,6 +242,101 @@ export default function StudentsPage() {
     setSelectedIds(next)
   }
 
+  // Open Edit Dialog
+  function openEditModal(student: StudentWithCount) {
+    setEditTarget(student)
+    setEditForm({
+      full_name: student.full_name || '',
+      nis: student.nis || '',
+      class: student.class || '',
+      school: student.school || '',
+      email: student.email || '',
+    })
+    setEditErrors({})
+  }
+
+  // Save Edit Handler
+  async function handleSaveEdit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editTarget) return
+
+    const errors: Record<string, string> = {}
+    if (!editForm.full_name.trim()) errors.full_name = 'Nama siswa wajib diisi'
+    if (!editForm.nis.trim()) errors.nis = 'NIS / NISN wajib diisi'
+    if (!editForm.class.trim()) errors.class = 'Kelas wajib diisi'
+    if (!editForm.school.trim()) errors.school = 'Nama sekolah wajib diisi'
+
+    if (Object.keys(errors).length > 0) {
+      setEditErrors(errors)
+      return
+    }
+
+    setSavingEdit(true)
+    const { error } = await supabase
+      .from('students')
+      .update({
+        full_name: editForm.full_name.trim(),
+        nis: editForm.nis.trim(),
+        class: editForm.class.trim(),
+        school: editForm.school.trim(),
+        email: editForm.email.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', editTarget.id)
+
+    if (error) {
+      toast.error(`Gagal menyimpan: ${error.message}`)
+    } else {
+      toast.success('Data siswa berhasil diperbarui')
+      setEditTarget(null)
+      load()
+      loadSchools()
+    }
+    setSavingEdit(false)
+  }
+
+  // Export Data Siswa to CSV
+  function handleExportCsv() {
+    const exportList = selectedIds.size > 0
+      ? students.filter((s) => selectedIds.has(s.id))
+      : students
+
+    if (exportList.length === 0) {
+      toast.error('Tidak ada data siswa untuk diunduh')
+      return
+    }
+
+    const headers = [
+      'Nama Siswa',
+      'Sekolah',
+      'Kelas',
+      'NIS/NISN',
+      'Email',
+      'Kode Akses',
+      'Tryout Terakhir',
+      'Nilai Terakhir',
+      'Jumlah Percobaan',
+      'Tanggal Terdaftar',
+    ]
+
+    const rows = exportList.map((s) => [
+      `"${(s.full_name || '').replace(/"/g, '""')}"`,
+      `"${(s.school || '').replace(/"/g, '""')}"`,
+      `"${(s.class || '').replace(/"/g, '""')}"`,
+      `"${(s.nis || '').replace(/"/g, '""')}"`,
+      `"${(s.email || '').replace(/"/g, '""')}"`,
+      `"${(s.latest_code || '-').replace(/"/g, '""')}"`,
+      `"${(s.latest_exam || '-').replace(/"/g, '""')}"`,
+      s.latest_score !== null && s.latest_score !== undefined ? `${s.latest_score}%` : '-',
+      s.attempt_count,
+      s.created_at ? formatDate(s.created_at) : '',
+    ])
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+    downloadCsv(csvContent, `data-siswa-tryout-${new Date().toISOString().slice(0, 10)}.csv`)
+    toast.success(`Berhasil mengunduh ${exportList.length} data siswa`)
+  }
+
   async function handleDelete() {
     if (!deleteTarget) return
     setDeleting(true)
@@ -312,33 +419,49 @@ export default function StudentsPage() {
         title="Siswa"
         description={`${total.toLocaleString('id-ID')} siswa terdaftar`}
         actions={
-          <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl border border-gray-200">
-            <button
-              onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                viewMode === 'table'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCsv}
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              }
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-              Daftar Tabel
-            </button>
-            <button
-              onClick={() => setViewMode('grouped')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                viewMode === 'grouped'
-                  ? 'bg-white text-primary-700 shadow-sm font-semibold'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              Grup Kode Akses
-            </button>
+              Unduh Data Siswa {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+            </Button>
+
+            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  viewMode === 'table'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                Daftar Tabel
+              </button>
+              <button
+                onClick={() => setViewMode('grouped')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  viewMode === 'grouped'
+                    ? 'bg-white text-primary-700 shadow-sm font-semibold'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                Grup Kode Akses
+              </button>
+            </div>
           </div>
         }
       />
@@ -498,11 +621,11 @@ export default function StudentsPage() {
                             <TableHeader>Nama Siswa</TableHeader>
                             <TableHeader>Sekolah</TableHeader>
                             <TableHeader>Kelas</TableHeader>
-                            <TableHeader>NIS</TableHeader>
+                            <TableHeader>NIS/NISN</TableHeader>
                             <TableHeader>Email</TableHeader>
                             <TableHeader>Nilai Terakhir</TableHeader>
                             <TableHeader>Terdaftar</TableHeader>
-                            <TableHeader className="w-16">Aksi</TableHeader>
+                            <TableHeader className="w-24">Aksi</TableHeader>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -545,16 +668,30 @@ export default function StudentsPage() {
                                 </TableCell>
                                 <TableCell className="text-xs text-gray-400">{formatDate(s.created_at)}</TableCell>
                                 <TableCell>
-                                  <button
-                                    onClick={() => setDeleteTarget(s)}
-                                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                    title="Hapus Siswa"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                  </button>
+                                  <div className="flex items-center gap-1">
+                                    {/* Edit Button */}
+                                    <button
+                                      onClick={() => openEditModal(s)}
+                                      className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                                      title="Edit Data Siswa"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                      </svg>
+                                    </button>
+                                    {/* Delete Button */}
+                                    <button
+                                      onClick={() => setDeleteTarget(s)}
+                                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                      title="Hapus Siswa"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                      </svg>
+                                    </button>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             )
@@ -622,7 +759,7 @@ export default function StudentsPage() {
                   Terdaftar {renderSortIcon('created_at')}
                 </button>
               </TableHeader>
-              <TableHeader className="w-20">Aksi</TableHeader>
+              <TableHeader className="w-24">Aksi</TableHeader>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -672,16 +809,30 @@ export default function StudentsPage() {
                     </TableCell>
                     <TableCell className="text-xs text-gray-400">{formatDate(s.created_at)}</TableCell>
                     <TableCell>
-                      <button
-                        onClick={() => setDeleteTarget(s)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        title="Hapus Siswa"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      <div className="flex items-center gap-1">
+                        {/* Edit Button */}
+                        <button
+                          onClick={() => openEditModal(s)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                          title="Edit Data Siswa"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        {/* Delete Button */}
+                        <button
+                          onClick={() => setDeleteTarget(s)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Hapus Siswa"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )
@@ -696,6 +847,80 @@ export default function StudentsPage() {
           <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
         </div>
       )}
+
+      {/* Edit Student Modal */}
+      <Dialog
+        open={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        title="Edit Data Siswa"
+        size="md"
+      >
+        <form onSubmit={handleSaveEdit} className="space-y-4">
+          <Input
+            label="Nama Lengkap Siswa"
+            value={editForm.full_name}
+            onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+            placeholder="Contoh: Budi Santoso"
+            error={editErrors.full_name}
+            required
+            autoFocus
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="NIS / NISN"
+              value={editForm.nis}
+              onChange={(e) => setEditForm({ ...editForm, nis: e.target.value })}
+              placeholder="Contoh: 123456"
+              error={editErrors.nis}
+              required
+            />
+
+            <Input
+              label="Kelas"
+              value={editForm.class}
+              onChange={(e) => setEditForm({ ...editForm, class: e.target.value })}
+              placeholder="Contoh: 8A atau 10 IPA 1"
+              error={editErrors.class}
+              required
+            />
+          </div>
+
+          <Input
+            label="Nama Sekolah"
+            value={editForm.school}
+            onChange={(e) => setEditForm({ ...editForm, school: e.target.value })}
+            placeholder="Contoh: SMP Negeri 1 Jakarta"
+            error={editErrors.school}
+            required
+          />
+
+          <Input
+            label="Email (Opsional)"
+            type="email"
+            value={editForm.email}
+            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+            placeholder="Contoh: budi@sekolah.sch.id"
+            error={editErrors.email}
+          />
+
+          <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-gray-100">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditTarget(null)}
+            >
+              Batal
+            </Button>
+            <Button
+              type="submit"
+              loading={savingEdit}
+            >
+              Simpan Perubahan
+            </Button>
+          </div>
+        </form>
+      </Dialog>
 
       {/* Single Delete Confirm */}
       <ConfirmDialog
