@@ -28,6 +28,36 @@ export function Card({ children, className, padding = 'md' }: CardProps) {
   )
 }
 
+export function CardHeader({
+  title,
+  description,
+  children,
+  className,
+}: {
+  title?: string
+  description?: string
+  children?: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div className={cn('mb-4 pb-3 border-b border-gray-100 dark:border-gray-700', className)}>
+      {title && <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h3>}
+      {description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>}
+      {children}
+    </div>
+  )
+}
+
+export function CardContent({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
+  return <div className={cn('space-y-3', className)}>{children}</div>
+}
+
 interface StatCardProps {
   label: string
   value: string | number
