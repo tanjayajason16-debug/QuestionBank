@@ -14,8 +14,24 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="id">
-      <body className="bg-gray-50 text-gray-900 min-h-screen">
+    <html lang="id" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const theme = localStorage.getItem('tryout_theme') || 'light';
+                if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="bg-gray-50 text-gray-900 min-h-screen dark:bg-gray-900 dark:text-gray-100 transition-colors">
         <I18nProvider>
           <ToastProvider />
           {children}
