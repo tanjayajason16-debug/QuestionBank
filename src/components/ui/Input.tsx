@@ -22,7 +22,7 @@ export function Input({
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label htmlFor={inputId} className="text-sm font-medium text-gray-700">
+        <label htmlFor={inputId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
           {label}
           {required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
         </label>
@@ -30,12 +30,12 @@ export function Input({
       <input
         id={inputId}
         className={cn(
-          'w-full rounded-lg border px-3 py-2 text-sm text-gray-900 placeholder-gray-400',
+          'w-full rounded-lg border px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500',
           'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-          'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
+          'disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed',
           error
-            ? 'border-red-400 bg-red-50 focus:ring-red-400'
-            : 'border-gray-300 bg-white',
+            ? 'border-red-400 bg-red-50 dark:bg-red-950/30 focus:ring-red-400'
+            : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800',
           className
         )}
         aria-invalid={error ? 'true' : 'false'}
@@ -43,12 +43,12 @@ export function Input({
         {...props}
       />
       {error && (
-        <p id={`${inputId}-error`} className="text-xs text-red-600" role="alert">
+        <p id={`${inputId}-error`} className="text-xs text-red-600 dark:text-red-400" role="alert">
           {error}
         </p>
       )}
       {hint && !error && (
-        <p id={`${inputId}-hint`} className="text-xs text-gray-500">
+        <p id={`${inputId}-hint`} className="text-xs text-gray-500 dark:text-gray-400">
           {hint}
         </p>
       )}
@@ -77,7 +77,7 @@ export function Textarea({
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label htmlFor={inputId} className="text-sm font-medium text-gray-700">
+        <label htmlFor={inputId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
           {label}
           {required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
         </label>
@@ -85,12 +85,12 @@ export function Textarea({
       <textarea
         id={inputId}
         className={cn(
-          'w-full rounded-lg border px-3 py-2 text-sm text-gray-900 placeholder-gray-400 resize-vertical min-h-[80px]',
+          'w-full rounded-lg border px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-vertical min-h-[80px]',
           'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-          'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
+          'disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed',
           error
-            ? 'border-red-400 bg-red-50 focus:ring-red-400'
-            : 'border-gray-300 bg-white',
+            ? 'border-red-400 bg-red-50 dark:bg-red-950/30 focus:ring-red-400'
+            : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800',
           className
         )}
         aria-invalid={error ? 'true' : 'false'}
@@ -98,12 +98,12 @@ export function Textarea({
         {...props}
       />
       {error && (
-        <p id={`${inputId}-error`} className="text-xs text-red-600" role="alert">
+        <p id={`${inputId}-error`} className="text-xs text-red-600 dark:text-red-400" role="alert">
           {error}
         </p>
       )}
       {hint && !error && (
-        <p className="text-xs text-gray-500">{hint}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{hint}</p>
       )}
     </div>
   )
@@ -134,7 +134,7 @@ export function Select({
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label htmlFor={inputId} className="text-sm font-medium text-gray-700">
+        <label htmlFor={inputId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
           {label}
           {required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
         </label>
@@ -142,12 +142,12 @@ export function Select({
       <select
         id={inputId}
         className={cn(
-          'w-full rounded-lg border px-3 py-2 text-sm text-gray-900 bg-white',
+          'w-full rounded-lg border px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700',
           'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-          'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
+          'disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed',
           error
-            ? 'border-red-400 bg-red-50 focus:ring-red-400'
-            : 'border-gray-300',
+            ? 'border-red-400 bg-red-50 dark:bg-red-950/30 focus:ring-red-400'
+            : 'border-gray-300 dark:border-gray-700',
           className
         )}
         aria-invalid={error ? 'true' : 'false'}
@@ -160,18 +160,18 @@ export function Select({
           </option>
         )}
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <option key={opt.value} value={opt.value} className="dark:bg-gray-800 dark:text-gray-100">
             {opt.label}
           </option>
         ))}
       </select>
       {error && (
-        <p id={`${inputId}-error`} className="text-xs text-red-600" role="alert">
+        <p id={`${inputId}-error`} className="text-xs text-red-600 dark:text-red-400" role="alert">
           {error}
         </p>
       )}
       {hint && !error && (
-        <p className="text-xs text-gray-500">{hint}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{hint}</p>
       )}
     </div>
   )
@@ -191,21 +191,21 @@ export function Checkbox({ label, description, error, className, id, ...props }:
         type="checkbox"
         id={inputId}
         className={cn(
-          'mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600',
-          'focus:ring-2 focus:ring-primary-500 cursor-pointer',
+          'mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-primary-600',
+          'focus:ring-2 focus:ring-primary-500 cursor-pointer dark:bg-gray-800',
           className
         )}
         {...props}
       />
       <div>
-        <label htmlFor={inputId} className="text-sm font-medium text-gray-700 cursor-pointer">
+        <label htmlFor={inputId} className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
           {label}
         </label>
         {description && (
-          <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>
         )}
         {error && (
-          <p className="text-xs text-red-600 mt-0.5">{error}</p>
+          <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{error}</p>
         )}
       </div>
     </div>

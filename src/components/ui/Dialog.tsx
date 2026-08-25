@@ -59,34 +59,34 @@ export function Dialog({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
       {/* Panel */}
       <div
         className={cn(
-          'relative w-full bg-white rounded-xl shadow-xl',
+          'relative w-full bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 text-gray-900 dark:text-gray-100',
           'max-h-[90vh] flex flex-col',
           sizes[size]
         )}
       >
         {(title || !hideClose) && (
-          <div className="flex items-start justify-between p-5 border-b border-gray-100">
+          <div className="flex items-start justify-between p-5 border-b border-gray-100 dark:border-gray-800">
             <div>
               {title && (
-                <h2 id="dialog-title" className="text-lg font-semibold text-gray-900">
+                <h2 id="dialog-title" className="text-lg font-semibold text-gray-900 dark:text-white">
                   {title}
                 </h2>
               )}
               {description && (
-                <p className="mt-1 text-sm text-gray-500">{description}</p>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
               )}
             </div>
             {!hideClose && (
               <button
                 onClick={onClose}
-                className="ml-4 text-gray-400 hover:text-gray-600 transition-colors rounded-lg p-1 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="ml-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-lg p-1 focus:outline-none"
                 aria-label="Tutup"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -127,7 +127,7 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} title={title} size="sm">
-      <p className="text-sm text-gray-600">{message}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-300">{message}</p>
       <div className="mt-5 flex justify-end gap-3">
         <Button variant="outline" onClick={onClose} disabled={loading}>
           {cancelLabel}

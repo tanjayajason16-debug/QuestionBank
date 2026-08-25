@@ -12,7 +12,7 @@ import type { ToastPosition } from 'react-hot-toast'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
-type ClearTarget = 'attempts' | 'students' | 'access_codes' | 'questions' | null
+type ClearTarget = 'all_data' | 'attempts' | 'students' | 'access_codes' | 'questions' | null
 
 export default function SettingsPage() {
   const supabase = createClient()
@@ -67,7 +67,7 @@ export default function SettingsPage() {
     setToastPosition(newPos)
     localStorage.setItem('tryout_toast_position', newPos)
     window.dispatchEvent(new CustomEvent('toast-position-changed', { detail: newPos }))
-    toast.success(`Posisi notifikasi diubah ke: ${newPos}`)
+    toast.success(`Posisi notifikasi: ${newPos}`)
   }
 
   // Handle Change Password
@@ -118,7 +118,17 @@ export default function SettingsPage() {
     setClearing(true)
     let err = null
 
-    if (clearTarget === 'attempts') {
+    if (clearTarget === 'all_data') {
+      // Total reset: clear answers, attempts, students, access_codes, exam_questions, exams, questions
+      const [r1, r2, r3, r4, r5] = await Promise.all([
+        supabase.from('answers').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        supabase.from('attempts').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        supabase.from('students').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        supabase.from('access_codes').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        supabase.from('questions').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+      ])
+      err = r1.error || r2.error || r3.error || r4.error || r5.error
+    } else if (clearTarget === 'attempts') {
       const { error } = await supabase.from('attempts').delete().neq('id', '00000000-0000-0000-0000-000000000000')
       err = error
     } else if (clearTarget === 'students') {
@@ -135,7 +145,7 @@ export default function SettingsPage() {
     if (err) {
       toast.error(`Gagal membersihkan data: ${err.message}`)
     } else {
-      toast.success('Data berhasil dibersihkan!')
+      toast.success('Pembersihan data berhasil!')
       setClearTarget(null)
       setConfirmInput('')
     }
@@ -143,6 +153,11 @@ export default function SettingsPage() {
   }
 
   const clearLabels: Record<NonNullable<ClearTarget>, { title: string; desc: string; danger: string }> = {
+    all_data: {
+      title: 'Hapus SEMUA Data Sistem (Total Reset)',
+      desc: 'Menghapus seluruh data siswa, riwayat ujian, kode akses, dan bank soal secara menyeluruh.',
+      danger: 'SEMUA data tryout, siswa, dan soal akan dihapus bersih dari database!',
+    },
     attempts: {
       title: 'Hapus Semua Riwayat Ujian (Attempts)',
       desc: 'Menghapus semua data pengerjaan, nilai, dan jawaban ujian siswa tanpa menghapus data siswa atau bank soal.',
@@ -174,7 +189,7 @@ export default function SettingsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 1. TAMPILAN / DARK & LIGHT MODE */}
-        <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <Card className="dark:bg-gray-900 dark:border-gray-800">
           <CardHeader
             title="Tampilan & Tema"
             description="Pilih mode tampilan tema admin panel"
@@ -187,18 +202,18 @@ export default function SettingsPage() {
                 onClick={() => applyTheme('light')}
                 className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 transition-all text-center ${
                   theme === 'light'
-                    ? 'border-primary-600 bg-primary-50/50 text-primary-900 shadow-sm'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300'
+                    ? 'border-primary-600 bg-primary-50/50 dark:bg-primary-950/40 text-primary-900 dark:text-primary-300 shadow-sm'
+                    : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 text-gray-700 dark:text-gray-300'
                 }`}
               >
-                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                 </div>
                 <div>
                   <p className="text-sm font-semibold">Mode Terang</p>
-                  <p className="text-xs text-gray-500">Light theme</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Light theme</p>
                 </div>
               </button>
 
@@ -208,18 +223,18 @@ export default function SettingsPage() {
                 onClick={() => applyTheme('dark')}
                 className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 transition-all text-center ${
                   theme === 'dark'
-                    ? 'border-primary-600 bg-primary-50/20 text-primary-600 shadow-sm'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300'
+                    ? 'border-primary-600 bg-primary-50/20 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400 shadow-sm'
+                    : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 text-gray-700 dark:text-gray-300'
                 }`}
               >
-                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-indigo-400">
+                <div className="w-10 h-10 rounded-full bg-slate-800 dark:bg-gray-800 flex items-center justify-center text-indigo-400">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                   </svg>
                 </div>
                 <div>
                   <p className="text-sm font-semibold">Mode Gelap</p>
-                  <p className="text-xs text-gray-500">Dark theme</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Dark theme</p>
                 </div>
               </button>
 
@@ -229,18 +244,18 @@ export default function SettingsPage() {
                 onClick={() => applyTheme('system')}
                 className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 transition-all text-center ${
                   theme === 'system'
-                    ? 'border-primary-600 bg-primary-50/50 text-primary-900 shadow-sm'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300'
+                    ? 'border-primary-600 bg-primary-50/50 dark:bg-primary-950/40 text-primary-900 dark:text-primary-300 shadow-sm'
+                    : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 text-gray-700 dark:text-gray-300'
                 }`}
               >
-                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300">
+                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div>
                   <p className="text-sm font-semibold">Sistem</p>
-                  <p className="text-xs text-gray-500">Auto switch</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Auto switch</p>
                 </div>
               </button>
             </div>
@@ -248,14 +263,14 @@ export default function SettingsPage() {
         </Card>
 
         {/* 2. NOTIFIKASI TOAST SETTINGS */}
-        <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <Card className="dark:bg-gray-900 dark:border-gray-800">
           <CardHeader
-            title="Posisi & Efek Notifikasi"
-            description="Atur letak kemunculan popup notifikasi dan efek interaksi"
+            title="Posisi & Notifikasi"
+            description="Atur letak kemunculan popup notifikasi"
           />
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                 Pilih Posisi Notifikasi
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -271,10 +286,10 @@ export default function SettingsPage() {
                     key={item.pos}
                     type="button"
                     onClick={() => applyToastPosition(item.pos as ToastPosition)}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
+                    className={`px-3 py-2.5 rounded-lg text-xs font-medium border transition-all ${
                       toastPosition === item.pos
                         ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                        : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50'
+                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     {item.label}
@@ -283,18 +298,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 rounded-xl">
-              <div className="flex items-start gap-2.5">
-                <span className="text-blue-600 text-lg">💡</span>
-                <div className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
-                  <p className="font-semibold mb-0.5">Fitur Notifikasi Cerdas:</p>
-                  <p>• <strong>Efek Hover:</strong> Notifikasi membesar sedikit saat kursor berada di atasnya.</p>
-                  <p>• <strong>Klik untuk Menutup:</strong> Klik langsung pada notifikasi untuk langsung menghilangkannya (mirip Android).</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -314,7 +318,7 @@ export default function SettingsPage() {
         </Card>
 
         {/* 3. GANTI PASSWORD ADMIN */}
-        <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <Card className="dark:bg-gray-900 dark:border-gray-800">
           <CardHeader
             title="Keamanan & Ganti Password"
             description="Perbarui kata sandi akun admin saat ini"
@@ -353,72 +357,87 @@ export default function SettingsPage() {
         </Card>
 
         {/* 4. CLEAR DATA / DANGER ZONE */}
-        <Card className="border-red-200 dark:border-red-900/60 dark:bg-gray-800">
+        <Card className="border-red-200 dark:border-red-900/60 dark:bg-gray-900">
           <CardHeader
             title="Pembersihan Data (Clear Data)"
             description="Hapus data massal atau reset data tryout sistem"
           />
           <CardContent className="space-y-3">
-            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl mb-4">
+            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl mb-3">
               <p className="text-xs font-semibold text-red-800 dark:text-red-300">
                 ⚠️ Tindakan pembersihan data tidak dapat dibatalkan. Pastikan Anda telah mengekspor data yang diperlukan.
               </p>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            {/* Total Reset Option */}
+            <div className="flex items-center justify-between p-3 rounded-xl border-2 border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30">
+              <div>
+                <p className="text-sm font-bold text-red-700 dark:text-red-400">🔥 Hapus SEMUA Data Sistem (Total Reset)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Hapus semua siswa, riwayat, kode, dan soal sekaligus</p>
+              </div>
+              <Button
+                size="sm"
+                className="bg-red-600 hover:bg-red-700 text-white border-transparent"
+                onClick={() => { setClearTarget('all_data'); setConfirmInput('') }}
+              >
+                Reset Total
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Bersihkan Riwayat Ujian</p>
-                <p className="text-xs text-gray-500">Hapus semua hasil attempt dan jawaban tryout</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Hapus semua hasil attempt dan jawaban tryout</p>
               </div>
               <Button
                 size="sm"
                 variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/60 hover:bg-red-50 dark:hover:bg-red-950/40"
                 onClick={() => { setClearTarget('attempts'); setConfirmInput('') }}
               >
                 Reset Riwayat
               </Button>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Hapus Semua Siswa</p>
-                <p className="text-xs text-gray-500">Hapus data seluruh siswa dan riwayat ujiannya</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Hapus data seluruh siswa dan riwayat ujiannya</p>
               </div>
               <Button
                 size="sm"
                 variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/60 hover:bg-red-50 dark:hover:bg-red-950/40"
                 onClick={() => { setClearTarget('students'); setConfirmInput('') }}
               >
                 Hapus Siswa
               </Button>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Hapus Semua Kode Akses</p>
-                <p className="text-xs text-gray-500">Bersihkan semua kode tryout yang telah dibuat</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Bersihkan semua kode tryout yang telah dibuat</p>
               </div>
               <Button
                 size="sm"
                 variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/60 hover:bg-red-50 dark:hover:bg-red-950/40"
                 onClick={() => { setClearTarget('access_codes'); setConfirmInput('') }}
               >
                 Hapus Kode
               </Button>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Hapus Semua Bank Soal</p>
-                <p className="text-xs text-gray-500">Kosongkan seluruh soal dari semua kategori</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Kosongkan seluruh soal dari semua kategori</p>
               </div>
               <Button
                 size="sm"
                 variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/60 hover:bg-red-50 dark:hover:bg-red-950/40"
                 onClick={() => { setClearTarget('questions'); setConfirmInput('') }}
               >
                 Hapus Soal
@@ -447,7 +466,7 @@ export default function SettingsPage() {
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                Ketik kata <span className="font-mono text-red-600 font-bold">HAPUS</span> untuk melanjutkan:
+                Ketik kata <span className="font-mono text-red-600 dark:text-red-400 font-bold">HAPUS</span> untuk melanjutkan:
               </label>
               <Input
                 value={confirmInput}
