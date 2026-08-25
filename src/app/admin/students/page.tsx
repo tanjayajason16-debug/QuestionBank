@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { Select } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Dialog, ConfirmDialog } from '@/components/ui/Dialog'
 import {
@@ -17,6 +18,9 @@ import type { Student } from '@/types/database'
 
 type StudentWithCount = Student & { attempt_count: number }
 
+type SortField = 'created_at' | 'full_name' | 'school' | 'class'
+type SortOrder = 'asc' | 'desc'
+
 const PAGE_SIZE = 25
 
 export default function StudentsPage() {
@@ -28,6 +32,12 @@ export default function StudentsPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
+  // Sorting & Filtering
+  const [sortBy, setSortBy] = useState<SortField>('created_at')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
+  const [filterSchool, setFilterSchool] = useState('')
+  const [schoolsList, setSchoolsList] = useState<string[]>([])
+
   // Selection state (Gmail-style)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const selectAllCheckboxRef = useRef<HTMLInputElement>(null)
@@ -37,6 +47,18 @@ export default function StudentsPage() {
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  // Fetch unique school list for filter dropdown
+  const loadSchools = useCallback(async () => {
+    const { data } = await supabase
+      .from('students')
+      .select('school')
+      .order('school')
+    if (data) {
+      const unique = Array.from(new Set(data.map((d) => d.school).filter(Boolean)))
+      setSchoolsList(unique)
+    }
+  }, [supabase])
+
   const load = useCallback(async () => {
     setLoading(true)
     let query = supabase
@@ -45,13 +67,17 @@ export default function StudentsPage() {
 
     if (search) {
       query = query.or(
-        `full_name.ilike.%${search}%,nis.ilike.%${search}%,school.ilike.%${search}%`
+        `full_name.ilike.%${search}%,nis.ilike.%${search}%,school.ilike.%${search}%,class.ilike.%${search}%`
       )
+    }
+
+    if (filterSchool) {
+      query = query.eq('school', filterSchool)
     }
 
     const from = (page - 1) * PAGE_SIZE
     const { data, count } = await query
-      .order('created_at', { ascending: false })
+      .order(sortBy, { ascending: sortOrder === 'asc' })
       .range(from, from + PAGE_SIZE - 1)
 
     if (data) {
@@ -71,14 +97,26 @@ export default function StudentsPage() {
 
     setTotal(count ?? 0)
     setLoading(false)
-  }, [supabase, search, page])
+  }, [supabase, search, filterSchool, sortBy, sortOrder, page])
+
+  useEffect(() => { loadSchools() }, [loadSchools])
 
   useEffect(() => {
     setPage(1)
     setSelectedIds(new Set())
-  }, [search])
+  }, [search, filterSchool, sortBy, sortOrder])
 
   useEffect(() => { load() }, [load])
+
+  // Column sort click handler
+  function handleHeaderSort(field: SortField) {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(field)
+      setSortOrder('asc')
+    }
+  }
 
   // Header checkbox indeterminate state
   const visibleIds = students.map((s) => s.id)
@@ -130,6 +168,7 @@ export default function StudentsPage() {
       setSelectedIds(next)
       setDeleteTarget(null)
       load()
+      loadSchools()
     }
     setDeleting(false)
   }
@@ -159,8 +198,25 @@ export default function StudentsPage() {
       setSelectedIds(new Set())
       setShowBulkDeleteConfirm(false)
       load()
+      loadSchools()
     }
     setDeleting(false)
+  }
+
+  // Helper render sort arrow
+  function renderSortIcon(field: SortField) {
+    if (sortBy !== field) {
+      return (
+        <span className="text-gray-300 ml-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+          ↕
+        </span>
+      )
+    }
+    return (
+      <span className="text-primary-600 ml-1 font-bold text-xs">
+        {sortOrder === 'asc' ? '▲' : '▼'}
+      </span>
+    )
   }
 
   return (
@@ -206,12 +262,41 @@ export default function StudentsPage() {
         </div>
       )}
 
-      <div className="mb-4">
+      {/* Filter and Sort Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4 items-stretch sm:items-center">
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Cari nama, NIS, atau sekolah..."
-          className="max-w-sm"
+          placeholder="Cari nama, NIS, sekolah, kelas..."
+          className="flex-1"
+        />
+
+        <Select
+          value={filterSchool}
+          onChange={(e) => setFilterSchool(e.target.value)}
+          options={schoolsList.map((s) => ({ value: s, label: s }))}
+          placeholder="Semua Sekolah"
+          className="w-full sm:w-48"
+        />
+
+        <Select
+          value={`${sortBy}-${sortOrder}`}
+          onChange={(e) => {
+            const [field, order] = e.target.value.split('-') as [SortField, SortOrder]
+            setSortBy(field)
+            setSortOrder(order)
+          }}
+          options={[
+            { value: 'created_at-desc', label: 'Terdaftar: Terbaru' },
+            { value: 'created_at-asc', label: 'Terdaftar: Terlama' },
+            { value: 'full_name-asc', label: 'Nama: A → Z' },
+            { value: 'full_name-desc', label: 'Nama: Z → A' },
+            { value: 'school-asc', label: 'Sekolah: A → Z' },
+            { value: 'school-desc', label: 'Sekolah: Z → A' },
+            { value: 'class-asc', label: 'Kelas: A → Z' },
+            { value: 'class-desc', label: 'Kelas: Z → A' },
+          ]}
+          className="w-full sm:w-52"
         />
       </div>
 
@@ -228,13 +313,45 @@ export default function StudentsPage() {
                 title="Pilih semua di halaman ini"
               />
             </TableHeader>
-            <TableHeader>Nama</TableHeader>
-            <TableHeader>Sekolah</TableHeader>
-            <TableHeader>Kelas</TableHeader>
+            <TableHeader>
+              <button
+                type="button"
+                onClick={() => handleHeaderSort('full_name')}
+                className="group flex items-center font-semibold text-gray-700 hover:text-primary-600 transition-colors uppercase tracking-wider"
+              >
+                Nama {renderSortIcon('full_name')}
+              </button>
+            </TableHeader>
+            <TableHeader>
+              <button
+                type="button"
+                onClick={() => handleHeaderSort('school')}
+                className="group flex items-center font-semibold text-gray-700 hover:text-primary-600 transition-colors uppercase tracking-wider"
+              >
+                Sekolah {renderSortIcon('school')}
+              </button>
+            </TableHeader>
+            <TableHeader>
+              <button
+                type="button"
+                onClick={() => handleHeaderSort('class')}
+                className="group flex items-center font-semibold text-gray-700 hover:text-primary-600 transition-colors uppercase tracking-wider"
+              >
+                Kelas {renderSortIcon('class')}
+              </button>
+            </TableHeader>
             <TableHeader>NIS/NISN</TableHeader>
             <TableHeader>Email</TableHeader>
             <TableHeader>Percobaan</TableHeader>
-            <TableHeader>Terdaftar</TableHeader>
+            <TableHeader>
+              <button
+                type="button"
+                onClick={() => handleHeaderSort('created_at')}
+                className="group flex items-center font-semibold text-gray-700 hover:text-primary-600 transition-colors uppercase tracking-wider"
+              >
+                Terdaftar {renderSortIcon('created_at')}
+              </button>
+            </TableHeader>
             <TableHeader className="w-20">Aksi</TableHeader>
           </TableRow>
         </TableHead>
@@ -242,7 +359,7 @@ export default function StudentsPage() {
           {loading ? (
             <TableSkeleton rows={6} cols={9} />
           ) : students.length === 0 ? (
-            <TableEmpty colSpan={9} message="Belum ada siswa" />
+            <TableEmpty colSpan={9} message="Belum ada data siswa" />
           ) : (
             students.map((s) => {
               const isSelected = selectedIds.has(s.id)
@@ -263,7 +380,11 @@ export default function StudentsPage() {
                     <span className="font-medium text-gray-900">{s.full_name}</span>
                   </TableCell>
                   <TableCell className="text-gray-600">{s.school}</TableCell>
-                  <TableCell className="text-gray-600">{s.class}</TableCell>
+                  <TableCell className="text-gray-600">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-800">
+                      {s.class}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{s.nis}</code>
                   </TableCell>
