@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef } from 'react'
+import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from './Button'
 
@@ -89,9 +90,7 @@ export function Dialog({
                 className="ml-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-lg p-1 focus:outline-none"
                 aria-label="Tutup"
               >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="h-5 w-5" />
               </button>
             )}
           </div>

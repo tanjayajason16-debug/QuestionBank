@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SearchInputProps {
@@ -33,20 +34,10 @@ export function SearchInput({
 
   return (
     <div className={cn('relative', className)}>
-      <svg
+      <Search
         className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 pointer-events-none"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
         aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
-        />
-      </svg>
+      />
       <input
         type="search"
         value={local}
@@ -61,9 +52,7 @@ export function SearchInput({
           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
           aria-label="Hapus pencarian"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <X className="h-4 w-4" />
         </button>
       )}
     </div>

@@ -1,4 +1,5 @@
 import React from 'react'
+import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface LoadingSpinnerProps {
@@ -9,21 +10,18 @@ interface LoadingSpinnerProps {
 
 export function LoadingSpinner({ size = 'md', className, label }: LoadingSpinnerProps) {
   const sizes = {
-    sm: 'h-4 w-4 border-2',
-    md: 'h-8 w-8 border-2',
-    lg: 'h-12 w-12 border-4',
+    sm: 'h-4 w-4',
+    md: 'h-8 w-8',
+    lg: 'h-12 w-12',
   }
 
   return (
     <div className={cn('flex flex-col items-center justify-center gap-2', className)} role="status">
-      <div
-        className={cn(
-          'animate-spin rounded-full border-gray-200 border-t-primary-600',
-          sizes[size]
-        )}
+      <Loader2
+        className={cn('animate-spin text-primary-600', sizes[size])}
         aria-hidden="true"
       />
-      {label && <span className="text-sm text-gray-500">{label}</span>}
+      {label && <span className="text-sm text-gray-500 dark:text-gray-400">{label}</span>}
       <span className="sr-only">Memuat...</span>
     </div>
   )
@@ -44,7 +42,7 @@ export function TableSkeleton({ rows = 5, cols = 5 }: { rows?: number; cols?: nu
         <tr key={i} className="animate-pulse">
           {Array.from({ length: cols }).map((_, j) => (
             <td key={j} className="px-4 py-3">
-              <div className="h-4 bg-gray-200 rounded w-3/4" />
+              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4" />
             </td>
           ))}
         </tr>

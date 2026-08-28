@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface PaginationProps {
@@ -41,9 +42,7 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
           )}
           aria-label="Halaman sebelumnya"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronLeft className="h-4 w-4" />
         </button>
 
         {pages.map((p, i) =>
@@ -79,9 +78,7 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
           )}
           aria-label="Halaman berikutnya"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <ChevronRight className="h-4 w-4" />
         </button>
       </div>
     </div>

@@ -19,6 +19,7 @@
     "react-dom": "^18",
     "react-hot-toast": "^2.4.1",
     "tailwind-merge": "^2.5.4",
+    "lucide-react": "^0.462.0",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
