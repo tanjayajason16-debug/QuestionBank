@@ -18,7 +18,7 @@ export function Card({ children, className, padding = 'md' }: CardProps) {
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border border-gray-200 shadow-sm',
+        'bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm text-gray-900 dark:text-gray-100 transition-colors',
         paddings[padding],
         className
       )}
@@ -40,7 +40,7 @@ export function CardHeader({
   className?: string
 }) {
   return (
-    <div className={cn('mb-4 pb-3 border-b border-gray-100 dark:border-gray-700', className)}>
+    <div className={cn('mb-4 pb-3 border-b border-gray-100 dark:border-gray-800', className)}>
       {title && <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h3>}
       {description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>}
       {children}
@@ -68,23 +68,23 @@ interface StatCardProps {
 
 export function StatCard({ label, value, icon, color = 'blue' }: StatCardProps) {
   const colors = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
-    purple: 'bg-purple-50 text-purple-600',
-    red: 'bg-red-50 text-red-600',
+    blue: 'bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400',
+    green: 'bg-green-50 text-green-600 dark:bg-green-950/60 dark:text-green-400',
+    yellow: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-950/60 dark:text-yellow-400',
+    purple: 'bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400',
+    red: 'bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400',
   }
 
   return (
-    <Card className="flex items-center gap-4">
+    <Card className="flex items-center gap-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm transition-colors">
       {icon && (
-        <div className={cn('p-3 rounded-xl', colors[color])}>
+        <div className={cn('p-3 rounded-xl flex-shrink-0 transition-colors', colors[color])}>
           {icon}
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-gray-500 truncate">{label}</p>
-        <p className="text-2xl font-bold text-gray-900 mt-0.5">{value}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{label}</p>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5">{value}</p>
       </div>
     </Card>
   )

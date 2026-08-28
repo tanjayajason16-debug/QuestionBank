@@ -108,15 +108,15 @@ export default function AnalyticsPage() {
 
   function difficultyBar(pct: number | null) {
     const p = pct ?? 0
-    let color = 'bg-green-400'
-    if (p < 40) color = 'bg-red-400'
-    else if (p < 70) color = 'bg-yellow-400'
+    let color = 'bg-green-400 dark:bg-green-500'
+    if (p < 40) color = 'bg-red-400 dark:bg-red-500'
+    else if (p < 70) color = 'bg-yellow-400 dark:bg-yellow-500'
     return (
       <div className="flex items-center gap-2">
-        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
           <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${p}%` }} />
         </div>
-        <span className="text-xs font-medium text-gray-600 w-10 text-right">{p}%</span>
+        <span className="text-xs font-medium text-gray-600 dark:text-gray-400 w-10 text-right">{p}%</span>
       </div>
     )
   }
@@ -133,7 +133,7 @@ export default function AnalyticsPage() {
 
       {/* Overall stats */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">Ringkasan Platform</h2>
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Ringkasan Platform</h2>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard label="Total Soal" value={(overallStats?.total_questions ?? 0).toLocaleString('id-ID')} color="blue"
             icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
@@ -158,7 +158,7 @@ export default function AnalyticsPage() {
 
       {/* Per-tryout analytics */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">Analitik Per Tryout</h2>
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Analitik Per Tryout</h2>
         <Select
           value={selectedExam}
           onChange={(e) => setSelectedExam(e.target.value)}
@@ -168,13 +168,13 @@ export default function AnalyticsPage() {
         />
 
         {!selectedExam && (
-          <div className="py-10 text-center text-sm text-gray-400 bg-gray-50 rounded-xl border border-gray-200">
+          <div className="py-10 text-center text-sm text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
             Pilih tryout untuk melihat analitik detail
           </div>
         )}
 
         {loadingExam && (
-          <div className="py-10 text-center text-sm text-gray-400">Memuat...</div>
+          <div className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">Memuat...</div>
         )}
 
         {!loadingExam && examStats && selectedExam && (
@@ -188,29 +188,29 @@ export default function AnalyticsPage() {
                 { label: 'Nilai Terendah', value: examStats.lowest_score ?? '-', unit: '%' },
                 { label: 'Tingkat Lulus', value: examStats.pass_rate ?? '-', unit: '%' },
               ].map((item) => (
-                <div key={item.label} className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
-                  <p className="text-2xl font-bold text-gray-900">
+                <div key={item.label} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center shadow-sm transition-colors">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {item.value}{item.unit}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">{item.label}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{item.label}</p>
                 </div>
               ))}
             </div>
 
             {/* Question analysis */}
             {examStats.question_stats && examStats.question_stats.length > 0 && (
-              <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-800">Analisis Per Soal</h3>
-                  <span className="text-xs text-gray-400">{examStats.question_stats.length} soal</span>
+              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm overflow-hidden transition-colors">
+                <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Analisis Per Soal</h3>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{examStats.question_stats.length} soal</span>
                 </div>
-                <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto scrollbar-thin">
+                <div className="divide-y divide-gray-50 dark:divide-gray-800 max-h-96 overflow-y-auto scrollbar-thin">
                   {examStats.question_stats.map((qs) => (
                     <div key={qs.question_id} className="px-5 py-3 flex items-center gap-4">
-                      <span className="w-8 text-xs font-bold text-gray-400 flex-shrink-0">
+                      <span className="w-8 text-xs font-bold text-gray-400 dark:text-gray-500 flex-shrink-0">
                         #{qs.order_index}
                       </span>
-                      <p className="text-sm text-gray-700 flex-1 truncate" title={qs.question_preview}>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate" title={qs.question_preview}>
                         {qs.question_preview}
                       </p>
                       <div className="w-40 flex-shrink-0">
@@ -222,13 +222,13 @@ export default function AnalyticsPage() {
 
                 {/* Most difficult questions */}
                 {sortedByDifficulty.length > 0 && (
-                  <div className="px-5 py-4 border-t border-gray-100 bg-red-50">
-                    <p className="text-xs font-semibold text-red-700 mb-2">
+                  <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-800 bg-red-50 dark:bg-red-950/40">
+                    <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-2">
                       3 Soal Paling Sulit
                     </p>
                     <div className="space-y-1">
                       {sortedByDifficulty.slice(0, 3).map((qs) => (
-                        <div key={qs.question_id} className="flex items-center gap-2 text-xs text-red-700">
+                        <div key={qs.question_id} className="flex items-center gap-2 text-xs text-red-700 dark:text-red-300">
                           <span className="font-bold">#{qs.order_index}</span>
                           <span className="flex-1 truncate">{qs.question_preview}</span>
                           <span className="font-bold">{qs.correct_percentage ?? 0}%</span>

@@ -167,27 +167,27 @@ export default function TryoutsPage() {
               <TableRow key={exam.id}>
                 <TableCell>
                   <div>
-                    <p className="font-medium text-gray-900 truncate max-w-[200px]" title={exam.title}>{exam.title}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate max-w-[200px]" title={exam.title}>{exam.title}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                       {exam.selection_mode === 'random' ? '🎲 Acak' : '✋ Manual'}
                     </p>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className="text-xs text-gray-600">{exam.categories?.name}</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">{exam.categories?.name}</span>
                 </TableCell>
-                <TableCell className="font-medium">{exam.question_count}</TableCell>
-                <TableCell>{exam.duration_minutes} mnt</TableCell>
-                <TableCell>{exam.passing_score}%</TableCell>
+                <TableCell className="font-medium text-gray-900 dark:text-gray-100">{exam.question_count}</TableCell>
+                <TableCell className="text-gray-700 dark:text-gray-300">{exam.duration_minutes} mnt</TableCell>
+                <TableCell className="text-gray-700 dark:text-gray-300">{exam.passing_score}%</TableCell>
                 <TableCell><StatusBadge status={exam.status} /></TableCell>
-                <TableCell className="text-xs text-gray-400">
+                <TableCell className="text-xs text-gray-400 dark:text-gray-500">
                   {exam.start_date ? formatDateOnly(exam.start_date) : '-'}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => router.push(`/admin/tryouts/${exam.id}/edit`)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                      className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-colors"
                       title="Edit"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -196,7 +196,7 @@ export default function TryoutsPage() {
                     </button>
                     <button
                       onClick={() => handleToggleStatus(exam)}
-                      className={`p-1.5 rounded-lg transition-colors ${exam.status === 'active' ? 'text-gray-400 hover:text-yellow-600 hover:bg-yellow-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`}
+                      className={`p-1.5 rounded-lg transition-colors ${exam.status === 'active' ? 'text-gray-400 dark:text-gray-500 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-950/40' : 'text-gray-400 dark:text-gray-500 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/40'}`}
                       title={exam.status === 'active' ? 'Nonaktifkan' : 'Aktifkan'}
                     >
                       {exam.status === 'active' ? (
@@ -207,14 +207,14 @@ export default function TryoutsPage() {
                     </button>
                     <button
                       onClick={() => handleDuplicate(exam)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
+                      className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors"
                       title="Duplikat"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                     </button>
                     <button
                       onClick={() => setDeleteTarget(exam)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                       title="Hapus"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>

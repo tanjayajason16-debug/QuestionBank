@@ -193,30 +193,30 @@ export default function ResultsPage() {
               <TableRow key={a.id}>
                 <TableCell>
                   <div>
-                    <p className="font-medium text-gray-900 text-sm">{a.students?.full_name}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{a.students?.full_name}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       {a.students?.school} · {a.students?.class} · {a.students?.nis}
                     </p>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className="text-xs text-gray-600 line-clamp-2 max-w-[160px]">
+                  <span className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 max-w-[160px]">
                     {a.exams?.title}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className="text-base font-bold text-gray-900">{a.score ?? '-'}%</span>
+                  <span className="text-base font-bold text-gray-900 dark:text-white">{a.score ?? '-'}%</span>
                 </TableCell>
-                <TableCell className="text-green-700 font-medium">{a.correct_count ?? '-'}</TableCell>
-                <TableCell className="text-red-600 font-medium">{a.wrong_count ?? '-'}</TableCell>
-                <TableCell className="text-gray-500">{a.unanswered_count ?? '-'}</TableCell>
-                <TableCell className="text-xs text-gray-500">{durationLabel(a)}</TableCell>
+                <TableCell className="text-green-700 dark:text-green-400 font-medium">{a.correct_count ?? '-'}</TableCell>
+                <TableCell className="text-red-600 dark:text-red-400 font-medium">{a.wrong_count ?? '-'}</TableCell>
+                <TableCell className="text-gray-500 dark:text-gray-400">{a.unanswered_count ?? '-'}</TableCell>
+                <TableCell className="text-xs text-gray-500 dark:text-gray-400">{durationLabel(a)}</TableCell>
                 <TableCell>
                   <Badge variant={a.passed ? 'success' : 'danger'}>
                     {a.passed ? 'Lulus' : 'Tidak Lulus'}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-xs text-gray-400">{formatDate(a.submitted_at)}</TableCell>
+                <TableCell className="text-xs text-gray-400 dark:text-gray-500">{formatDate(a.submitted_at)}</TableCell>
               </TableRow>
             ))
           )}

@@ -22,17 +22,11 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
     for (let i = 1; i <= totalPages; i++) pages.push(i)
   } else {
     pages.push(1)
-    if (page > 3) pages.push('...')
-    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
-      pages.push(i)
-    }
-    if (page < totalPages - 2) pages.push('...')
-    pages.push(totalPages)
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 px-1">
-      <p className="text-sm text-gray-500">
+    <div className="flex items-center justify-between gap-4 px-1 flex-wrap">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
         Menampilkan {from}–{to} dari {total} data
       </p>
       <div className="flex items-center gap-1" role="navigation" aria-label="Paginasi">
@@ -42,8 +36,8 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
           className={cn(
             'p-2 rounded-lg text-sm transition-colors',
             page === 1
-              ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'text-gray-300 dark:text-gray-700 cursor-not-allowed'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
           )}
           aria-label="Halaman sebelumnya"
         >
@@ -54,7 +48,7 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
 
         {pages.map((p, i) =>
           p === '...' ? (
-            <span key={`ellipsis-${i}`} className="px-2 text-gray-400 text-sm">
+            <span key={`ellipsis-${i}`} className="px-2 text-gray-400 dark:text-gray-500 text-sm">
               …
             </span>
           ) : (
@@ -64,8 +58,8 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
               className={cn(
                 'min-w-[36px] h-9 rounded-lg text-sm font-medium transition-colors',
                 p === page
-                  ? 'bg-primary-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
               )}
               aria-current={p === page ? 'page' : undefined}
             >
@@ -80,8 +74,8 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
           className={cn(
             'p-2 rounded-lg text-sm transition-colors',
             page === totalPages
-              ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'text-gray-300 dark:text-gray-700 cursor-not-allowed'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
           )}
           aria-label="Halaman berikutnya"
         >

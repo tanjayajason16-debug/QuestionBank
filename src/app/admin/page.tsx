@@ -143,43 +143,43 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Recent Attempts */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">Percobaan Terbaru</h2>
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm transition-colors overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">Percobaan Terbaru</h2>
         </div>
         <div className="overflow-x-auto">
           {recentAttempts.length === 0 ? (
-            <div className="py-12 text-center text-sm text-gray-400">
+            <div className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
               Belum ada percobaan
             </div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-gray-50 dark:bg-gray-900/90 border-b border-gray-100 dark:border-gray-800">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Siswa</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tryout</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nilai</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Waktu</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Siswa</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tryout</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nilai</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Waktu</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {recentAttempts.map((attempt: any) => (
-                  <tr key={attempt.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={attempt.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-4 py-3">
                       <div>
-                        <p className="font-medium text-gray-900">{attempt.students?.full_name}</p>
-                        <p className="text-xs text-gray-400">{attempt.students?.school} · {attempt.students?.class}</p>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{attempt.students?.full_name}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">{attempt.students?.school} · {attempt.students?.class}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{attempt.exams?.title}</td>
-                    <td className="px-4 py-3 font-semibold text-gray-900">{attempt.score ?? '-'}%</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{attempt.exams?.title}</td>
+                    <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">{attempt.score ?? '-'}%</td>
                     <td className="px-4 py-3">
                       <Badge variant={attempt.passed ? 'success' : 'danger'}>
                         {attempt.passed ? 'Lulus' : 'Tidak Lulus'}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(attempt.submitted_at)}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{formatDate(attempt.submitted_at)}</td>
                   </tr>
                 ))}
               </tbody>

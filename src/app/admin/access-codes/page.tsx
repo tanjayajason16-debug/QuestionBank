@@ -198,7 +198,7 @@ export default function AccessCodesPage() {
         title="Kode Akses"
         description={`${total.toLocaleString('id-ID')} kode`}
         actions={
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={handleExport}
               icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>}>
               Ekspor CSV
@@ -221,12 +221,12 @@ export default function AccessCodesPage() {
           placeholder="Semua Tryout"
           className="w-full sm:w-52"
         />
-        <div className="flex gap-1 border border-gray-200 rounded-lg p-1 bg-white">
+        <div className="flex gap-1 border border-gray-200 dark:border-gray-700 rounded-lg p-1 bg-white dark:bg-gray-800">
           {(['all', 'unused', 'used', 'disabled'] as FilterType[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilterType(f)}
-              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${filterType === f ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${filterType === f ? 'bg-primary-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
             >
               {{ all: 'Semua', unused: 'Belum', used: 'Terpakai', disabled: 'Nonaktif' }[f]}
             </button>
@@ -255,31 +255,31 @@ export default function AccessCodesPage() {
             codes.map((code) => (
               <TableRow key={code.id}>
                 <TableCell>
-                  <code className="font-mono text-sm font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">
+                  <code className="font-mono text-sm font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded border border-gray-200/50 dark:border-gray-700/50">
                     {code.code}
                   </code>
                 </TableCell>
                 <TableCell>
-                  <span className="text-xs text-gray-600 truncate max-w-[180px] block" title={code.exams?.title}>
+                  <span className="text-xs text-gray-600 dark:text-gray-300 truncate max-w-[180px] block" title={code.exams?.title}>
                     {code.exams?.title}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className={`text-sm font-medium ${code.usage_count >= code.max_usage ? 'text-red-600' : 'text-gray-700'}`}>
+                  <span className={`text-sm font-medium ${code.usage_count >= code.max_usage ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'}`}>
                     {code.usage_count} / {code.max_usage}
                   </span>
                 </TableCell>
-                <TableCell className="text-xs text-gray-500">
+                <TableCell className="text-xs text-gray-500 dark:text-gray-400">
                   {code.expires_at ? formatDateOnly(code.expires_at) : '∞'}
                 </TableCell>
                 <TableCell>{codeBadge(code)}</TableCell>
-                <TableCell className="text-xs text-gray-400">{formatDate(code.created_at)}</TableCell>
+                <TableCell className="text-xs text-gray-400 dark:text-gray-500">{formatDate(code.created_at)}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     {code.is_active && (
                       <button
                         onClick={() => setDisableTarget(code)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 transition-colors"
+                        className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-950/40 transition-colors"
                         title="Nonaktifkan"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -289,7 +289,7 @@ export default function AccessCodesPage() {
                     )}
                     <button
                       onClick={() => setDeleteTarget(code)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                       title="Hapus"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -362,12 +362,12 @@ export default function AccessCodesPage() {
             />
           </div>
           {genForm.prefix && (
-            <div className="p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
-              Contoh kode: <code className="font-mono font-bold">{genForm.prefix.toUpperCase()}-XXXXX</code>
+            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-300">
+              Contoh kode: <code className="font-mono font-bold text-gray-900 dark:text-white">{genForm.prefix.toUpperCase()}-XXXXX</code>
             </div>
           )}
         </div>
-        <div className="mt-5 flex justify-end gap-3">
+        <div className="mt-5 flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-gray-800">
           <Button variant="outline" onClick={() => setShowGenerate(false)}>Batal</Button>
           <Button onClick={handleGenerate} loading={generating}>
             Buat {genForm.count || 0} Kode

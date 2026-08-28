@@ -163,20 +163,20 @@ export function QuestionSelector({ examId, categoryId, targetCount, mode, onDone
   const isComplete = selected.size === targetCount
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-gray-900 dark:text-gray-100">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-semibold text-gray-700">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             Pilih Soal{' '}
             <span className={cn(
               'font-bold',
-              isComplete ? 'text-green-600' : selected.size > targetCount ? 'text-red-600' : 'text-primary-600'
+              isComplete ? 'text-green-600 dark:text-green-400' : selected.size > targetCount ? 'text-red-600 dark:text-red-400' : 'text-primary-600 dark:text-primary-400'
             )}>
               {selected.size} / {targetCount}
             </span>
           </p>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
             {mode === 'manual'
               ? 'Pilih soal secara manual dari daftar di bawah'
               : 'Klik "Pilih Acak" atau pilih manual'}
@@ -185,7 +185,7 @@ export function QuestionSelector({ examId, categoryId, targetCount, mode, onDone
 
         {mode === 'random' && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">Tersedia: {availableForRandom}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Tersedia: {availableForRandom}</span>
             <Button
               size="sm"
               variant="secondary"
@@ -206,7 +206,7 @@ export function QuestionSelector({ examId, categoryId, targetCount, mode, onDone
 
       {/* Insufficient warning */}
       {mode === 'random' && availableForRandom < targetCount && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-lg text-sm text-red-700 dark:text-red-300">
           Soal tidak cukup. Tersedia: <strong>{availableForRandom}</strong>, dibutuhkan: <strong>{targetCount}</strong>.
           Tambahkan <strong>{targetCount - availableForRandom}</strong> soal lagi ke bank soal.
         </div>
@@ -232,12 +232,12 @@ export function QuestionSelector({ examId, categoryId, targetCount, mode, onDone
       </div>
 
       {/* Question list */}
-      <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <div className="max-h-96 overflow-y-auto scrollbar-thin divide-y divide-gray-100">
+      <div className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden bg-white dark:bg-gray-900">
+        <div className="max-h-96 overflow-y-auto scrollbar-thin divide-y divide-gray-100 dark:divide-gray-800">
           {loading ? (
-            <div className="py-8 text-center text-sm text-gray-400">Memuat soal...</div>
+            <div className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">Memuat soal...</div>
           ) : questions.length === 0 ? (
-            <div className="py-8 text-center text-sm text-gray-400">Tidak ada soal</div>
+            <div className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">Tidak ada soal</div>
           ) : (
             questions.map((q) => {
               const isSelected = selected.has(q.id)
@@ -249,13 +249,13 @@ export function QuestionSelector({ examId, categoryId, targetCount, mode, onDone
                   className={cn(
                     'w-full flex items-start gap-3 px-4 py-3 text-left transition-colors',
                     isSelected
-                      ? 'bg-primary-50 hover:bg-primary-100'
-                      : 'bg-white hover:bg-gray-50'
+                      ? 'bg-primary-50 dark:bg-primary-950/60 hover:bg-primary-100 dark:hover:bg-primary-950/80'
+                      : 'bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                   )}
                 >
                   <div className={cn(
                     'mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors',
-                    isSelected ? 'border-primary-600 bg-primary-600' : 'border-gray-300'
+                    isSelected ? 'border-primary-600 bg-primary-600' : 'border-gray-300 dark:border-gray-600'
                   )}>
                     {isSelected && (
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -264,10 +264,10 @@ export function QuestionSelector({ examId, categoryId, targetCount, mode, onDone
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-800 line-clamp-2">{q.question}</p>
+                    <p className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2">{q.question}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <DifficultyBadge difficulty={q.difficulty} />
-                      <span className="text-xs text-gray-400">Kelas {q.grade}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">Kelas {q.grade}</span>
                     </div>
                   </div>
                 </button>
@@ -277,14 +277,14 @@ export function QuestionSelector({ examId, categoryId, targetCount, mode, onDone
         </div>
 
         {total > PAGE_SIZE && (
-          <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
+          <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
             <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
           </div>
         )}
       </div>
 
       <div className="flex justify-between items-center pt-2">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Menampilkan {questions.length} dari {total} soal tersedia
         </p>
         <Button onClick={handleSave} loading={saving} disabled={selected.size === 0}>

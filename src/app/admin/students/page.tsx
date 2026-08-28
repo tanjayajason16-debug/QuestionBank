@@ -408,9 +408,9 @@ export default function StudentsPage() {
 
   function renderSortIcon(field: SortField) {
     if (sortBy !== field) {
-      return <span className="text-gray-300 ml-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">↕</span>
+      return <span className="text-gray-300 dark:text-gray-600 ml-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">↕</span>
     }
-    return <span className="text-primary-600 ml-1 font-bold text-xs">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+    return <span className="text-primary-600 dark:text-primary-400 ml-1 font-bold text-xs">{sortOrder === 'asc' ? '▲' : '▼'}</span>
   }
 
   return (
@@ -434,13 +434,13 @@ export default function StudentsPage() {
               Unduh Data Siswa {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
             </Button>
 
-            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200">
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setViewMode('table')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   viewMode === 'table'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -452,8 +452,8 @@ export default function StudentsPage() {
                 onClick={() => setViewMode('grouped')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   viewMode === 'grouped'
-                    ? 'bg-white text-primary-700 shadow-sm font-semibold'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-white dark:bg-gray-700 text-primary-700 dark:text-primary-400 shadow-sm font-semibold'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -468,12 +468,12 @@ export default function StudentsPage() {
 
       {/* Bulk Action Bar (Gmail style) */}
       {selectedIds.size > 0 && (
-        <div className="mb-4 p-3 bg-primary-50 border border-primary-200 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in duration-200">
+        <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in duration-200">
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center justify-center bg-primary-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">
               {selectedIds.size}
             </span>
-            <span className="text-sm font-medium text-primary-900">
+            <span className="text-sm font-medium text-primary-900 dark:text-primary-200">
               siswa terpilih
             </span>
           </div>
@@ -540,11 +540,11 @@ export default function StudentsPage() {
       {viewMode === 'grouped' ? (
         <div className="space-y-4">
           {loading ? (
-            <div className="bg-white rounded-xl border p-6">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
               <TableSkeleton rows={4} cols={6} />
             </div>
           ) : groupedData.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-8 text-center text-gray-500 dark:text-gray-400">
               Belum ada data siswa
             </div>
           ) : (
@@ -557,11 +557,11 @@ export default function StudentsPage() {
               return (
                 <div
                   key={group.code}
-                  className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all"
+                  className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden transition-all"
                 >
                   {/* Collapsible Header */}
                   <div
-                    className="flex items-center justify-between p-4 bg-gray-50/80 hover:bg-gray-100/80 cursor-pointer select-none transition-colors border-b border-gray-100"
+                    className="flex items-center justify-between p-4 bg-gray-50/80 dark:bg-gray-800/80 hover:bg-gray-100/80 dark:hover:bg-gray-800 cursor-pointer select-none transition-colors border-b border-gray-100 dark:border-gray-800"
                     onClick={() => toggleGroup(group.code)}
                   >
                     <div className="flex items-center gap-3">
@@ -576,16 +576,16 @@ export default function StudentsPage() {
                           e.stopPropagation()
                           toggleSelectGroup(group.students)
                         }}
-                        className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                        className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-primary-600 focus:ring-primary-500 cursor-pointer dark:bg-gray-800"
                         title="Pilih semua siswa di grup ini"
                       />
 
                       <button
                         type="button"
-                        className="p-1 rounded-lg text-gray-400 hover:text-gray-700 transition-transform"
+                        className="p-1 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-transform"
                       >
                         <svg
-                          className={`w-5 h-5 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-primary-600' : ''}`}
+                          className={`w-5 h-5 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-primary-600 dark:text-primary-400' : ''}`}
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -595,17 +595,17 @@ export default function StudentsPage() {
                       </button>
 
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono font-bold text-sm bg-primary-100 text-primary-800 px-2.5 py-1 rounded-lg border border-primary-200">
+                        <span className="font-mono font-bold text-sm bg-primary-100 dark:bg-primary-950 text-primary-800 dark:text-primary-300 px-2.5 py-1 rounded-lg border border-primary-200 dark:border-primary-800">
                           {group.code}
                         </span>
-                        <span className="text-sm font-semibold text-gray-800">
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                           {group.examTitle}
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-300">
                         {group.students.length} Siswa
                       </span>
                     </div>
@@ -613,10 +613,10 @@ export default function StudentsPage() {
 
                   {/* Collapsible Content */}
                   {isExpanded && (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-gray-100 dark:divide-gray-800">
                       <Table>
                         <TableHead>
-                          <TableRow className="bg-gray-50/40 text-xs">
+                          <TableRow className="bg-gray-50/40 dark:bg-gray-800/40 text-xs">
                             <TableHeader className="w-10"></TableHeader>
                             <TableHeader>Nama Siswa</TableHeader>
                             <TableHeader>Sekolah</TableHeader>
@@ -634,45 +634,45 @@ export default function StudentsPage() {
                             return (
                               <TableRow
                                 key={s.id}
-                                className={isSelected ? 'bg-primary-50/40 hover:bg-primary-50/60' : undefined}
+                                className={isSelected ? 'bg-primary-50/40 dark:bg-primary-950/40 hover:bg-primary-50/60 dark:hover:bg-primary-950/60' : undefined}
                               >
                                 <TableCell className="w-10">
                                   <input
                                     type="checkbox"
                                     checked={isSelected}
                                     onChange={() => toggleSelectOne(s.id)}
-                                    className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-primary-600 focus:ring-primary-500 cursor-pointer dark:bg-gray-800"
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <span className="font-medium text-gray-900 text-sm">{s.full_name}</span>
+                                  <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">{s.full_name}</span>
                                 </TableCell>
-                                <TableCell className="text-gray-600 text-xs">{s.school}</TableCell>
+                                <TableCell className="text-gray-600 dark:text-gray-400 text-xs">{s.school}</TableCell>
                                 <TableCell>
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-800">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300">
                                     {s.class}
                                   </span>
                                 </TableCell>
                                 <TableCell>
-                                  <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{s.nis}</code>
+                                  <code className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-1.5 py-0.5 rounded">{s.nis}</code>
                                 </TableCell>
-                                <TableCell className="text-gray-500 text-xs">{s.email ?? '-'}</TableCell>
+                                <TableCell className="text-gray-500 dark:text-gray-400 text-xs">{s.email ?? '-'}</TableCell>
                                 <TableCell>
                                   {s.latest_score !== null && s.latest_score !== undefined ? (
-                                    <span className="font-bold text-gray-900 text-sm">
+                                    <span className="font-bold text-gray-900 dark:text-white text-sm">
                                       {s.latest_score}%
                                     </span>
                                   ) : (
-                                    <span className="text-xs text-gray-400">-</span>
+                                    <span className="text-xs text-gray-400 dark:text-gray-600">-</span>
                                   )}
                                 </TableCell>
-                                <TableCell className="text-xs text-gray-400">{formatDate(s.created_at)}</TableCell>
+                                <TableCell className="text-xs text-gray-400 dark:text-gray-500">{formatDate(s.created_at)}</TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-1">
                                     {/* Edit Button */}
                                     <button
                                       onClick={() => openEditModal(s)}
-                                      className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                                      className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-colors"
                                       title="Edit Data Siswa"
                                     >
                                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -683,7 +683,7 @@ export default function StudentsPage() {
                                     {/* Delete Button */}
                                     <button
                                       onClick={() => setDeleteTarget(s)}
-                                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                      className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                                       title="Hapus Siswa"
                                     >
                                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -716,7 +716,7 @@ export default function StudentsPage() {
                   type="checkbox"
                   checked={allVisibleSelected}
                   onChange={toggleSelectAll}
-                  className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                  className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-primary-600 focus:ring-primary-500 cursor-pointer dark:bg-gray-800"
                   title="Pilih semua di halaman ini"
                 />
               </TableHeader>
@@ -724,7 +724,7 @@ export default function StudentsPage() {
                 <button
                   type="button"
                   onClick={() => handleHeaderSort('full_name')}
-                  className="group flex items-center font-semibold text-gray-700 hover:text-primary-600 transition-colors uppercase tracking-wider"
+                  className="group flex items-center font-semibold text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider"
                 >
                   Nama {renderSortIcon('full_name')}
                 </button>
@@ -733,7 +733,7 @@ export default function StudentsPage() {
                 <button
                   type="button"
                   onClick={() => handleHeaderSort('school')}
-                  className="group flex items-center font-semibold text-gray-700 hover:text-primary-600 transition-colors uppercase tracking-wider"
+                  className="group flex items-center font-semibold text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider"
                 >
                   Sekolah {renderSortIcon('school')}
                 </button>
@@ -742,7 +742,7 @@ export default function StudentsPage() {
                 <button
                   type="button"
                   onClick={() => handleHeaderSort('class')}
-                  className="group flex items-center font-semibold text-gray-700 hover:text-primary-600 transition-colors uppercase tracking-wider"
+                  className="group flex items-center font-semibold text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider"
                 >
                   Kelas {renderSortIcon('class')}
                 </button>
@@ -754,7 +754,7 @@ export default function StudentsPage() {
                 <button
                   type="button"
                   onClick={() => handleHeaderSort('created_at')}
-                  className="group flex items-center font-semibold text-gray-700 hover:text-primary-600 transition-colors uppercase tracking-wider"
+                  className="group flex items-center font-semibold text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider"
                 >
                   Terdaftar {renderSortIcon('created_at')}
                 </button>
@@ -773,47 +773,47 @@ export default function StudentsPage() {
                 return (
                   <TableRow
                     key={s.id}
-                    className={isSelected ? 'bg-primary-50/40 hover:bg-primary-50/60' : undefined}
+                    className={isSelected ? 'bg-primary-50/40 dark:bg-primary-950/40 hover:bg-primary-50/60 dark:hover:bg-primary-950/60' : undefined}
                   >
                     <TableCell className="w-10">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleSelectOne(s.id)}
-                        className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                        className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-primary-600 focus:ring-primary-500 cursor-pointer dark:bg-gray-800"
                       />
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium text-gray-900">{s.full_name}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{s.full_name}</span>
                     </TableCell>
-                    <TableCell className="text-gray-600">{s.school}</TableCell>
-                    <TableCell className="text-gray-600">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-800">
+                    <TableCell className="text-gray-600 dark:text-gray-400">{s.school}</TableCell>
+                    <TableCell className="text-gray-600 dark:text-gray-400">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300">
                         {s.class}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{s.nis}</code>
+                      <code className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-1.5 py-0.5 rounded">{s.nis}</code>
                     </TableCell>
                     <TableCell>
                       {s.latest_code && s.latest_code !== 'Belum ada kode' ? (
-                        <span className="font-mono text-xs font-semibold bg-primary-50 text-primary-700 px-2 py-0.5 rounded border border-primary-200">
+                        <span className="font-mono text-xs font-semibold bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded border border-primary-200 dark:border-primary-800">
                           {s.latest_code}
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400">-</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-600">-</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm font-medium text-gray-700">{s.attempt_count}</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{s.attempt_count}</span>
                     </TableCell>
-                    <TableCell className="text-xs text-gray-400">{formatDate(s.created_at)}</TableCell>
+                    <TableCell className="text-xs text-gray-400 dark:text-gray-500">{formatDate(s.created_at)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         {/* Edit Button */}
                         <button
                           onClick={() => openEditModal(s)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                          className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-colors"
                           title="Edit Data Siswa"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -824,7 +824,7 @@ export default function StudentsPage() {
                         {/* Delete Button */}
                         <button
                           onClick={() => setDeleteTarget(s)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                           title="Hapus Siswa"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -904,7 +904,7 @@ export default function StudentsPage() {
             error={editErrors.email}
           />
 
-          <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-gray-100">
+          <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-gray-800">
             <Button
               type="button"
               variant="outline"

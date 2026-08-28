@@ -239,7 +239,7 @@ export default function QuestionsPage() {
         title="Bank Soal"
         description={`${total.toLocaleString('id-ID')} soal tersedia`}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               variant="outline"
               size="sm"
@@ -283,12 +283,12 @@ export default function QuestionsPage() {
 
       {/* Bulk Action Bar (Gmail style) */}
       {selectedIds.size > 0 && (
-        <div className="mb-4 p-3 bg-primary-50 border border-primary-200 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in duration-200">
+        <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in duration-200">
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center justify-center bg-primary-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">
               {selectedIds.size}
             </span>
-            <span className="text-sm font-medium text-primary-900">
+            <span className="text-sm font-medium text-primary-900 dark:text-primary-200">
               soal terpilih
             </span>
           </div>
@@ -361,7 +361,7 @@ export default function QuestionsPage() {
                 type="checkbox"
                 checked={allVisibleSelected}
                 onChange={toggleSelectAll}
-                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-primary-600 focus:ring-primary-500 cursor-pointer dark:bg-gray-800"
                 title="Pilih semua di halaman ini"
               />
             </TableHeader>
@@ -386,46 +386,46 @@ export default function QuestionsPage() {
               return (
                 <TableRow
                   key={q.id}
-                  className={isSelected ? 'bg-primary-50/40 hover:bg-primary-50/60' : undefined}
+                  className={isSelected ? 'bg-primary-50/40 dark:bg-primary-950/40 hover:bg-primary-50/60 dark:hover:bg-primary-950/60' : undefined}
                 >
                   <TableCell className="w-10">
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleSelectOne(q.id)}
-                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-primary-600 focus:ring-primary-500 cursor-pointer dark:bg-gray-800"
                     />
                   </TableCell>
-                  <TableCell className="text-gray-400 text-xs">
+                  <TableCell className="text-gray-400 dark:text-gray-500 text-xs">
                     {(page - 1) * PAGE_SIZE + i + 1}
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="truncate text-gray-900 font-medium" title={q.question}>
+                    <p className="truncate text-gray-900 dark:text-gray-100 font-medium" title={q.question}>
                       {q.question}
                     </p>
                     {q.image_url && (
-                      <span className="text-xs text-blue-500 mt-0.5 block">📷 Ada gambar</span>
+                      <span className="text-xs text-blue-500 dark:text-blue-400 mt-0.5 block">📷 Ada gambar</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <span className="text-xs text-gray-600">{q.categories?.name}</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">{q.categories?.name}</span>
                   </TableCell>
-                  <TableCell className="text-gray-600">{q.grade}</TableCell>
+                  <TableCell className="text-gray-600 dark:text-gray-400">{q.grade}</TableCell>
                   <TableCell>
                     <DifficultyBadge difficulty={q.difficulty} />
                   </TableCell>
                   <TableCell>
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-100 dark:bg-green-950/80 text-green-700 dark:text-green-400 text-xs font-bold border border-green-200/50 dark:border-green-800/50">
                       {q.correct_answer}
                     </span>
                   </TableCell>
-                  <TableCell className="text-xs text-gray-400">{formatDate(q.created_at)}</TableCell>
+                  <TableCell className="text-xs text-gray-400 dark:text-gray-500">{formatDate(q.created_at)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       {/* Preview */}
                       <button
                         onClick={() => setPreviewTarget(q)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
                         title="Pratinjau"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -438,7 +438,7 @@ export default function QuestionsPage() {
                       {/* Edit */}
                       <button
                         onClick={() => setEditTarget(q)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                        className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-colors"
                         title="Edit"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -449,7 +449,7 @@ export default function QuestionsPage() {
                       {/* Delete */}
                       <button
                         onClick={() => setDeleteTarget(q)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                         title="Hapus"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

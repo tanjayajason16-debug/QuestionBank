@@ -162,7 +162,7 @@ export default function CategoriesPage() {
           {loading ? (
             <TableRow>
               <TableCell colSpan={6}>
-                <div className="py-8 text-center text-sm text-gray-400">Memuat...</div>
+                <div className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">Memuat...</div>
               </TableCell>
             </TableRow>
           ) : categories.length === 0 ? (
@@ -171,17 +171,17 @@ export default function CategoriesPage() {
             categories.map((cat) => (
               <TableRow key={cat.id}>
                 <TableCell>
-                  <span className="font-medium text-gray-900">{cat.name}</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{cat.name}</span>
                 </TableCell>
-                <TableCell>{cat.education_level ?? '-'}</TableCell>
-                <TableCell>{cat.subject ?? '-'}</TableCell>
-                <TableCell>{cat.grade ? `Kelas ${cat.grade}` : '-'}</TableCell>
-                <TableCell className="text-xs text-gray-400">{formatDate(cat.created_at)}</TableCell>
+                <TableCell className="text-gray-600 dark:text-gray-400">{cat.education_level ?? '-'}</TableCell>
+                <TableCell className="text-gray-600 dark:text-gray-400">{cat.subject ?? '-'}</TableCell>
+                <TableCell className="text-gray-600 dark:text-gray-400">{cat.grade ? `Kelas ${cat.grade}` : '-'}</TableCell>
+                <TableCell className="text-xs text-gray-400 dark:text-gray-500">{formatDate(cat.created_at)}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => openEdit(cat)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                      className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-colors"
                       aria-label="Edit kategori"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -191,7 +191,7 @@ export default function CategoriesPage() {
                     </button>
                     <button
                       onClick={() => setDeleteTarget(cat)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                       aria-label="Hapus kategori"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -247,8 +247,8 @@ export default function CategoriesPage() {
             placeholder="contoh: 8"
           />
         </div>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button variant="outline" onClick={() => setShowForm(false)} disabled={saving}>
+        <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+          <Button variant="outline" onClick={() => setShowForm(false)}>
             Batal
           </Button>
           <Button onClick={handleSave} loading={saving}>
@@ -263,7 +263,7 @@ export default function CategoriesPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         title="Hapus Kategori"
-        message={`Hapus kategori "${deleteTarget?.name}"? Tindakan ini tidak dapat dibatalkan dan akan gagal jika kategori sedang digunakan.`}
+        message={`Hapus kategori "${deleteTarget?.name}"? Soal dalam kategori ini mungkin akan terpengaruh.`}
         confirmLabel="Hapus"
         loading={deleting}
       />

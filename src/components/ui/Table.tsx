@@ -8,7 +8,7 @@ interface TableProps {
 
 export function Table({ children, className }: TableProps) {
   return (
-    <div className={cn('w-full overflow-x-auto rounded-lg border border-gray-200', className)}>
+    <div className={cn('w-full overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm transition-colors', className)}>
       <table className="w-full text-sm text-left">{children}</table>
     </div>
   )
@@ -16,14 +16,14 @@ export function Table({ children, className }: TableProps) {
 
 export function TableHead({ children }: { children: React.ReactNode }) {
   return (
-    <thead className="bg-gray-50 border-b border-gray-200">
+    <thead className="bg-gray-50 dark:bg-gray-900/90 border-b border-gray-200 dark:border-gray-800 transition-colors">
       {children}
     </thead>
   )
 }
 
 export function TableBody({ children }: { children: React.ReactNode }) {
-  return <tbody className="divide-y divide-gray-100">{children}</tbody>
+  return <tbody className="divide-y divide-gray-100 dark:divide-gray-800/80 transition-colors">{children}</tbody>
 }
 
 export function TableRow({
@@ -38,7 +38,7 @@ export function TableRow({
   return (
     <tr
       className={cn(
-        'bg-white hover:bg-gray-50 transition-colors',
+        'bg-white dark:bg-gray-900 hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors',
         onClick && 'cursor-pointer',
         className
       )}
@@ -67,8 +67,8 @@ export function TableHeader({
   return (
     <th
       className={cn(
-        'px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap',
-        sortable && 'cursor-pointer select-none hover:text-gray-700',
+        'px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap',
+        sortable && 'cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200',
         className
       )}
       onClick={onClick}
@@ -77,7 +77,7 @@ export function TableHeader({
       <span className="inline-flex items-center gap-1">
         {children}
         {sortable && (
-          <span className="text-gray-400">
+          <span className="text-gray-400 dark:text-gray-500">
             {sorted ? (direction === 'asc' ? '↑' : '↓') : '↕'}
           </span>
         )}
@@ -96,7 +96,7 @@ export function TableCell({
   colSpan?: number
 }) {
   return (
-    <td className={cn('px-4 py-3 text-gray-700', className)} colSpan={colSpan}>
+    <td className={cn('px-4 py-3 text-gray-700 dark:text-gray-300', className)} colSpan={colSpan}>
       {children}
     </td>
   )
@@ -112,7 +112,7 @@ export function TableEmpty({
   return (
     <TableRow>
       <TableCell colSpan={colSpan}>
-        <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+        <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-500">
           <svg
             className="h-10 w-10 mb-2"
             fill="none"
