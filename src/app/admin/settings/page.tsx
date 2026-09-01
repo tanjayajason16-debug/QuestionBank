@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/admin/PageHeader'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { Dialog, ConfirmDialog } from '@/components/ui/Dialog'
+import { Dialog } from '@/components/ui/Dialog'
 import { toast } from '@/components/ui/Toast'
 import type { ToastPosition } from 'react-hot-toast'
 

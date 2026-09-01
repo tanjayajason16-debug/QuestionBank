@@ -33,3 +33,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# exported data files (generated at runtime, not source code)
+*.csv
+!supabase/seed.sql

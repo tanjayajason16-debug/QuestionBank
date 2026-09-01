@@ -1,3 +1,0 @@
-category,grade,difficulty,question,image_url,option_a,option_b,option_c,option_d,correct_answer,explanation
-Matematika SMP,8,medium,"Jika 2x + 5 = 15, maka nilai x adalah ...",,3,5,7,10,B,"Kurangi 5 dari kedua sisi sehingga 2x = 10. Kemudian bagi kedua sisi dengan 2 sehingga x = 5."
-Bahasa Indonesia,8,easy,"Antonim dari kata 'besar' adalah ...",,tinggi,kecil,panjang,luas,B,"Kata 'kecil' merupakan lawan kata atau antonim dari 'besar'."
