@@ -78,12 +78,12 @@ export default function CreateTryoutPage() {
               </div>
               <span className="text-sm font-medium hidden sm:block">{s.label}</span>
             </div>
-            {i === 0 && <div className="flex-1 h-0.5 bg-gray-200 max-w-12" />}
+            {i === 0 && <div className="flex-1 h-0.5 bg-gray-200 dark:bg-gray-700 max-w-12" />}
           </React.Fragment>
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 lg:p-6 transition-colors">
         {step === 'form' && (
           <TryoutForm
             categories={categories}

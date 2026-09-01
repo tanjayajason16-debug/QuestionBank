@@ -111,7 +111,7 @@ export function TryoutForm({ categories, initial, onSave, onCancel, saving }: Tr
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
       {/* Basic Info */}
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Informasi Dasar</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-2">Informasi Dasar</h3>
         <Input
           label="Judul"
           value={form.title}
@@ -159,11 +159,11 @@ export function TryoutForm({ categories, initial, onSave, onCancel, saving }: Tr
 
       {/* Exam Config */}
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Konfigurasi Ujian</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-2">Konfigurasi Ujian</h3>
 
         {/* Question count */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Jumlah Soal <span className="text-red-500">*</span>
           </label>
           <div className="flex flex-wrap gap-2">
@@ -175,7 +175,7 @@ export function TryoutForm({ categories, initial, onSave, onCancel, saving }: Tr
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                   !customCount && form.question_count === String(n)
                     ? 'bg-primary-600 text-white border-primary-600'
-                    : 'border-gray-300 text-gray-600 hover:border-primary-400'
+                    : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-primary-400 dark:bg-gray-800'
                 }`}
               >
                 {n}
@@ -187,7 +187,7 @@ export function TryoutForm({ categories, initial, onSave, onCancel, saving }: Tr
               className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                 customCount
                   ? 'bg-primary-600 text-white border-primary-600'
-                  : 'border-gray-300 text-gray-600 hover:border-primary-400'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-primary-400 dark:bg-gray-800'
               }`}
             >
               Kustom
@@ -231,7 +231,7 @@ export function TryoutForm({ categories, initial, onSave, onCancel, saving }: Tr
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700 block mb-2">Mode Pemilihan Soal</label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Mode Pemilihan Soal</label>
           <div className="flex gap-4">
             {[
               { value: 'manual', label: 'Manual', desc: 'Pilih soal sendiri' },
@@ -241,8 +241,8 @@ export function TryoutForm({ categories, initial, onSave, onCancel, saving }: Tr
                 key={opt.value}
                 className={`flex-1 flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
                   form.selection_mode === opt.value
-                    ? 'border-primary-500 bg-primary-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/40'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 dark:bg-gray-800/50'
                 }`}
               >
                 <input
@@ -254,8 +254,8 @@ export function TryoutForm({ categories, initial, onSave, onCancel, saving }: Tr
                   className="mt-0.5 text-primary-600"
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-800">{opt.label}</p>
-                  <p className="text-xs text-gray-500">{opt.desc}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{opt.label}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{opt.desc}</p>
                 </div>
               </label>
             ))}
@@ -265,7 +265,7 @@ export function TryoutForm({ categories, initial, onSave, onCancel, saving }: Tr
 
       {/* Options */}
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Opsi Tambahan</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-2">Opsi Tambahan</h3>
         <Checkbox
           label="Acak urutan soal"
           description="Urutan soal berbeda untuk setiap siswa"
@@ -294,7 +294,7 @@ export function TryoutForm({ categories, initial, onSave, onCancel, saving }: Tr
 
       {/* Schedule */}
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Jadwal (opsional)</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-2">Jadwal (opsional)</h3>
         <div className="grid grid-cols-2 gap-4">
           <Input
             label="Tanggal Mulai"
@@ -311,7 +311,7 @@ export function TryoutForm({ categories, initial, onSave, onCancel, saving }: Tr
         </div>
       </section>
 
-      <div className="flex justify-end gap-3 pt-2 border-t">
+      <div className="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
         <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
           Batal
         </Button>

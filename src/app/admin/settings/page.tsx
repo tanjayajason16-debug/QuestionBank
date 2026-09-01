@@ -154,7 +154,7 @@ export default function SettingsPage() {
 
   const clearLabels: Record<NonNullable<ClearTarget>, { title: string; desc: string; danger: string }> = {
     all_data: {
-      title: 'Hapus SEMUA Data Sistem (Total Reset)',
+      title: 'Hapus SEMUA Data Sistem',
       desc: 'Menghapus seluruh data siswa, riwayat ujian, kode akses, dan bank soal secara menyeluruh.',
       danger: 'SEMUA data tryout, siswa, dan soal akan dihapus bersih dari database!',
     },
@@ -372,7 +372,7 @@ export default function SettingsPage() {
             {/* Total Reset Option */}
             <div className="flex items-center justify-between p-3 rounded-xl border-2 border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30">
               <div>
-                <p className="text-sm font-bold text-red-700 dark:text-red-400">🔥 Hapus SEMUA Data Sistem (Total Reset)</p>
+                <p className="text-sm font-bold text-red-700 dark:text-red-400">🔥 Hapus SEMUA Data Sistem</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Hapus semua siswa, riwayat, kode, dan soal sekaligus</p>
               </div>
               <Button

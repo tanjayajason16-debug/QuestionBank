@@ -64,7 +64,7 @@ export default function EditTryoutPage() {
         }
       />
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5 lg:p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 lg:p-6 transition-colors">
         {!showQuestions ? (
           <TryoutForm
             categories={categories}
