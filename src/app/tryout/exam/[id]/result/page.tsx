@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { PageLoader } from '@/components/ui/LoadingSpinner'
 import { formatDuration } from '@/lib/utils'
 import { cn } from '@/lib/utils'
+import { toast } from '@/components/ui/Toast'
 
 interface AnswerReview {
   index: number
@@ -37,10 +38,272 @@ interface ResultData {
   answers: AnswerReview[] | null
 }
 
+// ─── Download helpers (lazy-loaded so bundle stays light) ──────────────────
+async function downloadAsPng(element: HTMLElement, filename: string) {
+  const html2canvas = (await import('html2canvas')).default
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#ffffff',
+    logging: false,
+  })
+  const link = document.createElement('a')
+  link.download = filename
+  link.href = canvas.toDataURL('image/png')
+  link.click()
+}
+
+async function downloadAsPdf(element: HTMLElement, filename: string) {
+  const html2canvas = (await import('html2canvas')).default
+  const { jsPDF } = await import('jspdf')
+
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#ffffff',
+    logging: false,
+  })
+
+  const imgData = canvas.toDataURL('image/png')
+  const imgWidth = 210 // A4 width mm
+  const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+  const pdf = new jsPDF({
+    orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
+    unit: 'mm',
+    format: 'a4',
+  })
+
+  // If taller than one A4 page, split across pages
+  const pageHeight = pdf.internal.pageSize.getHeight()
+  let yOffset = 0
+  while (yOffset < imgHeight) {
+    pdf.addImage(imgData, 'PNG', 0, -yOffset, imgWidth, imgHeight)
+    yOffset += pageHeight
+    if (yOffset < imgHeight) pdf.addPage()
+  }
+
+  pdf.save(filename)
+}
+
+// ─── Result card (also rendered as the download target) ───────────────────
+function ResultCard({
+  result,
+  printRef,
+}: {
+  result: ResultData
+  printRef: React.RefObject<HTMLDivElement>
+}) {
+  const passed = result.passed
+  const submittedDate = result.submitted_at
+    ? new Date(result.submitted_at).toLocaleString('id-ID', {
+        day: '2-digit', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      })
+    : '-'
+
+  return (
+    <div
+      ref={printRef}
+      id="result-download-card"
+      className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden"
+      style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+    >
+      {/* Header banner */}
+      <div
+        className={cn(
+          'px-6 py-5 text-center',
+          passed
+            ? 'bg-gradient-to-r from-green-500 to-emerald-600'
+            : 'bg-gradient-to-r from-red-500 to-rose-600'
+        )}
+      >
+        <p className="text-white/80 text-xs font-medium uppercase tracking-widest mb-1">
+          Hasil Tryout
+        </p>
+        <h1 className="text-white text-lg font-bold leading-snug">
+          {result.exam_title}
+        </h1>
+      </div>
+
+      <div className="p-6">
+        {/* Score circle + pass/fail */}
+        <div className="flex flex-col items-center mb-6">
+          <div
+            className={cn(
+              'w-28 h-28 rounded-full border-4 flex flex-col items-center justify-center mb-3',
+              passed
+                ? 'border-green-400 bg-green-50'
+                : 'border-red-400 bg-red-50'
+            )}
+          >
+            <span
+              className={cn(
+                'text-4xl font-black leading-none',
+                passed ? 'text-green-600' : 'text-red-600'
+              )}
+            >
+              {Math.round(result.score ?? 0)}
+            </span>
+            <span className="text-xs text-gray-400 mt-1">dari 100</span>
+          </div>
+
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold',
+              passed
+                ? 'bg-green-100 text-green-700'
+                : 'bg-red-100 text-red-700'
+            )}
+          >
+            {passed ? '✓ LULUS' : '✗ TIDAK LULUS'}
+          </span>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-2 mb-5">
+          {[
+            { label: 'Benar', value: result.correct_count, bg: 'bg-green-50', text: 'text-green-700' },
+            { label: 'Salah', value: result.wrong_count, bg: 'bg-red-50', text: 'text-red-600' },
+            { label: 'Kosong', value: result.unanswered_count, bg: 'bg-gray-50', text: 'text-gray-500' },
+            { label: 'Nilai Lulus', value: `${result.passing_score}%`, bg: 'bg-blue-50', text: 'text-blue-700' },
+          ].map((s) => (
+            <div key={s.label} className={cn('rounded-xl p-3 text-center', s.bg)}>
+              <p className={cn('text-xl font-bold', s.text)}>{s.value}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Details row */}
+        <div className="flex items-center justify-between text-xs text-gray-400 mb-5 px-1">
+          <span>{result.total_questions} soal</span>
+          <span>Waktu: {formatDuration(result.time_used_seconds)}</span>
+          <span>{submittedDate}</span>
+        </div>
+
+        {/* Student info */}
+        <div className="bg-gray-50 rounded-xl p-4 text-sm border border-gray-100">
+          <p className="font-bold text-gray-800 text-base">{result.student?.full_name}</p>
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-gray-500 text-xs">
+            <span>🏫 {result.student?.school}</span>
+            <span>📚 Kelas {result.student?.class}</span>
+            <span>🪪 NIS: {result.student?.nis}</span>
+          </div>
+        </div>
+
+        {/* Footer watermark */}
+        <p className="text-center text-xs text-gray-300 mt-4">
+          Platform Tryout Online
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Download button group ─────────────────────────────────────────────────
+function DownloadButtons({
+  result,
+  printRef,
+}: {
+  result: ResultData
+  printRef: React.RefObject<HTMLDivElement>
+}) {
+  const [downloading, setDownloading] = useState<'png' | 'pdf' | null>(null)
+
+  const filename = `hasil-${result.student?.full_name?.replace(/\s+/g, '-').toLowerCase()}-${result.exam_title?.replace(/\s+/g, '-').toLowerCase()}`
+
+  async function handleDownload(type: 'png' | 'pdf') {
+    if (!printRef.current) return
+    setDownloading(type)
+    try {
+      if (type === 'png') {
+        await downloadAsPng(printRef.current, `${filename}.png`)
+        toast.success('Hasil berhasil diunduh sebagai gambar PNG!')
+      } else {
+        await downloadAsPdf(printRef.current, `${filename}.pdf`)
+        toast.success('Hasil berhasil diunduh sebagai PDF!')
+      }
+    } catch {
+      toast.error('Gagal mengunduh. Coba lagi.')
+    }
+    setDownloading(null)
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 text-center">
+        Unduh Hasil
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        {/* PNG */}
+        <button
+          onClick={() => handleDownload('png')}
+          disabled={!!downloading}
+          className={cn(
+            'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center',
+            'border-violet-200 bg-violet-50 hover:bg-violet-100 hover:border-violet-400',
+            downloading === 'png' && 'opacity-60 cursor-not-allowed'
+          )}
+        >
+          <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center text-violet-600">
+            {downloading === 'png' ? (
+              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            )}
+          </div>
+          <div>
+            <p className="text-sm font-bold text-violet-700">PNG</p>
+            <p className="text-xs text-violet-500">Gambar</p>
+          </div>
+        </button>
+
+        {/* PDF */}
+        <button
+          onClick={() => handleDownload('pdf')}
+          disabled={!!downloading}
+          className={cn(
+            'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center',
+            'border-rose-200 bg-rose-50 hover:bg-rose-100 hover:border-rose-400',
+            downloading === 'pdf' && 'opacity-60 cursor-not-allowed'
+          )}
+        >
+          <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600">
+            {downloading === 'pdf' ? (
+              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            )}
+          </div>
+          <div>
+            <p className="text-sm font-bold text-rose-700">PDF</p>
+            <p className="text-xs text-rose-500">Dokumen</p>
+          </div>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main page ─────────────────────────────────────────────────────────────
 export default function ResultPage() {
   const params = useParams()
   const router = useRouter()
   const attemptId = params.id as string
+  const printRef = useRef<HTMLDivElement>(null)
 
   const [result, setResult] = useState<ResultData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -49,7 +312,6 @@ export default function ResultPage() {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    // Poll until result is ready (in case we arrive before grading completes)
     let attempts = 0
     const poll = async () => {
       const res = await fetch(`/api/tryout/attempt/${attemptId}/result`)
@@ -84,95 +346,36 @@ export default function ResultPage() {
 
   if (!result) return null
 
-  const scoreColor =
-    result.passed
-      ? 'text-green-600'
-      : 'text-red-600'
-
-  const scoreRing =
-    result.passed
-      ? 'border-green-400 bg-green-50'
-      : 'border-red-400 bg-red-50'
-
   return (
     <div className="min-h-screen py-8 px-4">
-      <div className="max-w-2xl mx-auto space-y-5">
+      <div className="max-w-2xl mx-auto space-y-4">
 
-        {/* Score card */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
-          <div className={cn('px-6 py-5 text-center border-b', result.passed ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100')}>
-            <p className="text-sm text-gray-500 mb-1">{result.exam_title}</p>
-            <h1 className="text-lg font-bold text-gray-900">Tryout Selesai</h1>
-          </div>
+        {/* Result card — also used as download target */}
+        <ResultCard result={result} printRef={printRef} />
 
-          <div className="p-6 text-center">
-            {/* Big score circle */}
-            <div className={cn('inline-flex items-center justify-center w-32 h-32 rounded-full border-4 mb-4', scoreRing)}>
-              <div>
-                <p className={cn('text-4xl font-black leading-none', scoreColor)}>
-                  {Math.round(result.score ?? 0)}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">dari 100</p>
-              </div>
-            </div>
+        {/* Download buttons */}
+        <DownloadButtons result={result} printRef={printRef} />
 
-            <div className={cn('inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-5', result.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
-              {result.passed ? (
-                <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> LULUS</>
-              ) : (
-                <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> TIDAK LULUS</>
-              )}
-            </div>
-
-            {/* Stats grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-              {[
-                { label: 'Benar', value: result.correct_count, color: 'text-green-700 bg-green-50' },
-                { label: 'Salah', value: result.wrong_count, color: 'text-red-600 bg-red-50' },
-                { label: 'Tdk Dijawab', value: result.unanswered_count, color: 'text-gray-500 bg-gray-50' },
-                { label: 'Nilai Lulus', value: `${result.passing_score}%`, color: 'text-blue-700 bg-blue-50' },
-              ].map((s) => (
-                <div key={s.label} className={cn('rounded-xl p-3', s.color.split(' ')[1])}>
-                  <p className={cn('text-2xl font-bold', s.color.split(' ')[0])}>{s.value}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Time used */}
-            <p className="text-xs text-gray-400 mb-5">
-              Waktu: {formatDuration(result.time_used_seconds)}
-            </p>
-
-            {/* Student info */}
-            <div className="text-left bg-gray-50 rounded-xl p-4 mb-5 text-sm">
-              <p className="font-semibold text-gray-800">{result.student?.full_name}</p>
-              <p className="text-gray-500 text-xs mt-0.5">
-                {result.student?.school} · {result.student?.class} · {result.student?.nis}
-              </p>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              {result.show_explanations && result.answers && (
-                <Button
-                  variant="outline"
-                  onClick={() => setShowReview(!showReview)}
-                  icon={
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  }
-                >
-                  {showReview ? 'Sembunyikan' : 'Tinjau Jawaban'}
-                </Button>
-              )}
-              <Button onClick={() => router.push('/tryout')}>
-                Kembali ke Beranda
-              </Button>
-            </div>
-          </div>
+        {/* Action buttons */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          {result.show_explanations && result.answers && (
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowReview(!showReview)}
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              }
+            >
+              {showReview ? 'Sembunyikan Tinjauan' : 'Tinjau Jawaban'}
+            </Button>
+          )}
+          <Button className="flex-1" onClick={() => router.push('/tryout')}>
+            Kembali ke Beranda
+          </Button>
         </div>
 
         {/* Answer Review */}
@@ -194,6 +397,7 @@ export default function ResultPage() {
   )
 }
 
+// ─── Answer card ───────────────────────────────────────────────────────────
 function AnswerCard({
   answer: a,
   imageError,
@@ -214,7 +418,6 @@ function AnswerCard({
 
   return (
     <div className={cn('rounded-xl border p-4 sm:p-5', statusConfig.color)}>
-      {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <span className="text-xs font-bold text-gray-500">Soal {a.index}</span>
         <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full', statusConfig.badge)}>
@@ -222,17 +425,14 @@ function AnswerCard({
         </span>
       </div>
 
-      {/* Question */}
       <p className="text-gray-900 text-sm leading-relaxed mb-3">{a.question}</p>
 
-      {/* Image */}
       {a.image_url && !imageError && (
         <div className="relative mb-3 h-36 w-full rounded-lg overflow-hidden border border-gray-200 bg-white">
           <Image src={a.image_url} alt="Gambar soal" fill className="object-contain" onError={onImageError} unoptimized />
         </div>
       )}
 
-      {/* Options */}
       <div className="space-y-2 mb-3">
         {a.options.map((opt) => {
           const isSelected = a.selected_answer === opt.key
@@ -251,16 +451,16 @@ function AnswerCard({
             >
               <span className={cn(
                 'flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
-                isCorrectOpt
-                  ? 'bg-green-500 text-white'
-                  : isSelected && !isCorrectOpt
-                  ? 'bg-red-400 text-white'
-                  : 'bg-gray-100 text-gray-500'
+                isCorrectOpt ? 'bg-green-500 text-white'
+                : isSelected && !isCorrectOpt ? 'bg-red-400 text-white'
+                : 'bg-gray-100 text-gray-500'
               )}>
                 {opt.key}
               </span>
               <span className={cn(
-                isCorrectOpt ? 'text-green-800 font-medium' : isSelected && !isCorrectOpt ? 'text-red-700' : 'text-gray-700'
+                isCorrectOpt ? 'text-green-800 font-medium'
+                : isSelected && !isCorrectOpt ? 'text-red-700'
+                : 'text-gray-700'
               )}>
                 {opt.text}
               </span>
@@ -279,7 +479,6 @@ function AnswerCard({
         })}
       </div>
 
-      {/* Your answer vs correct */}
       {!isUnanswered && !isCorrect && (
         <div className="flex gap-4 text-xs mb-3">
           <div>
@@ -293,7 +492,6 @@ function AnswerCard({
         </div>
       )}
 
-      {/* Explanation */}
       <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
         <p className="text-xs font-semibold text-amber-700 mb-1">Penjelasan</p>
         <p className="text-xs text-amber-800 leading-relaxed">{a.explanation}</p>
