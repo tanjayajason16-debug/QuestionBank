@@ -38,7 +38,7 @@ interface ResultData {
   answers: AnswerReview[] | null
 }
 
-// ─── Download helpers (lazy-loaded so bundle stays light) ──────────────────
+// ─── Download helpers ──────────────────────────────────────────────────────
 async function downloadAsPng(element: HTMLElement, filename: string) {
   const html2canvas = (await import('html2canvas')).default
   const canvas = await html2canvas(element, {
@@ -46,6 +46,7 @@ async function downloadAsPng(element: HTMLElement, filename: string) {
     useCORS: true,
     backgroundColor: '#ffffff',
     logging: false,
+    windowWidth: 794, // A4-ish width in px at 96dpi
   })
   const link = document.createElement('a')
   link.download = filename
@@ -62,32 +63,28 @@ async function downloadAsPdf(element: HTMLElement, filename: string) {
     useCORS: true,
     backgroundColor: '#ffffff',
     logging: false,
+    windowWidth: 794,
   })
 
   const imgData = canvas.toDataURL('image/png')
-  const imgWidth = 210 // A4 width mm
-  const imgHeight = (canvas.height * imgWidth) / canvas.width
+  const pdfWidth = 210 // A4 mm
+  const pdfHeight = (canvas.height * pdfWidth) / canvas.width
 
-  const pdf = new jsPDF({
-    orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
-    unit: 'mm',
-    format: 'a4',
-  })
-
-  // If taller than one A4 page, split across pages
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageHeight = pdf.internal.pageSize.getHeight()
+
   let yOffset = 0
-  while (yOffset < imgHeight) {
-    pdf.addImage(imgData, 'PNG', 0, -yOffset, imgWidth, imgHeight)
+  while (yOffset < pdfHeight) {
+    pdf.addImage(imgData, 'PNG', 0, -yOffset, pdfWidth, pdfHeight)
     yOffset += pageHeight
-    if (yOffset < imgHeight) pdf.addPage()
+    if (yOffset < pdfHeight) pdf.addPage()
   }
 
   pdf.save(filename)
 }
 
-// ─── Result card (also rendered as the download target) ───────────────────
-function ResultCard({
+// ─── Hidden printable document (full: summary + every Q&A) ────────────────
+function PrintDocument({
   result,
   printRef,
 }: {
@@ -102,100 +99,237 @@ function ResultCard({
       })
     : '-'
 
+  const hasAnswers = result.show_explanations && result.answers && result.answers.length > 0
+
   return (
     <div
       ref={printRef}
-      id="result-download-card"
-      className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden"
-      style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+      style={{
+        position: 'fixed',
+        left: '-9999px',
+        top: 0,
+        width: '794px',           // ~A4 at 96dpi
+        background: '#ffffff',
+        fontFamily: 'Inter, Arial, sans-serif',
+        fontSize: '13px',
+        color: '#111827',
+        padding: '32px',
+        boxSizing: 'border-box',
+      }}
+      aria-hidden="true"
     >
-      {/* Header banner */}
-      <div
-        className={cn(
-          'px-6 py-5 text-center',
-          passed
-            ? 'bg-gradient-to-r from-green-500 to-emerald-600'
-            : 'bg-gradient-to-r from-red-500 to-rose-600'
-        )}
-      >
-        <p className="text-white/80 text-xs font-medium uppercase tracking-widest mb-1">
-          Hasil Tryout
-        </p>
-        <h1 className="text-white text-lg font-bold leading-snug">
-          {result.exam_title}
-        </h1>
+      {/* ── HEADER BANNER ── */}
+      <div style={{
+        borderRadius: '12px',
+        overflow: 'hidden',
+        marginBottom: '20px',
+        background: passed ? 'linear-gradient(135deg,#16a34a,#059669)' : 'linear-gradient(135deg,#dc2626,#e11d48)',
+      }}>
+        <div style={{ padding: '20px 24px', textAlign: 'center' }}>
+          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
+            Hasil Tryout
+          </p>
+          <h1 style={{ color: '#fff', fontSize: '18px', fontWeight: 800, margin: 0 }}>
+            {result.exam_title}
+          </h1>
+        </div>
       </div>
 
-      <div className="p-6">
-        {/* Score circle + pass/fail */}
-        <div className="flex flex-col items-center mb-6">
-          <div
-            className={cn(
-              'w-28 h-28 rounded-full border-4 flex flex-col items-center justify-center mb-3',
-              passed
-                ? 'border-green-400 bg-green-50'
-                : 'border-red-400 bg-red-50'
-            )}
-          >
-            <span
-              className={cn(
-                'text-4xl font-black leading-none',
-                passed ? 'text-green-600' : 'text-red-600'
-              )}
-            >
-              {Math.round(result.score ?? 0)}
-            </span>
-            <span className="text-xs text-gray-400 mt-1">dari 100</span>
-          </div>
-
-          <span
-            className={cn(
-              'inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold',
-              passed
-                ? 'bg-green-100 text-green-700'
-                : 'bg-red-100 text-red-700'
-            )}
-          >
-            {passed ? '✓ LULUS' : '✗ TIDAK LULUS'}
+      {/* ── SCORE + STATS ── */}
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '20px' }}>
+        {/* Score circle */}
+        <div style={{
+          width: '110px', height: '110px', borderRadius: '50%',
+          border: `4px solid ${passed ? '#4ade80' : '#f87171'}`,
+          background: passed ? '#f0fdf4' : '#fff1f2',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: '36px', fontWeight: 900, color: passed ? '#16a34a' : '#dc2626', lineHeight: 1 }}>
+            {Math.round(result.score ?? 0)}
           </span>
+          <span style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>dari 100</span>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-2 mb-5">
-          {[
-            { label: 'Benar', value: result.correct_count, bg: 'bg-green-50', text: 'text-green-700' },
-            { label: 'Salah', value: result.wrong_count, bg: 'bg-red-50', text: 'text-red-600' },
-            { label: 'Kosong', value: result.unanswered_count, bg: 'bg-gray-50', text: 'text-gray-500' },
-            { label: 'Nilai Lulus', value: `${result.passing_score}%`, bg: 'bg-blue-50', text: 'text-blue-700' },
-          ].map((s) => (
-            <div key={s.label} className={cn('rounded-xl p-3 text-center', s.bg)}>
-              <p className={cn('text-xl font-bold', s.text)}>{s.value}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
-            </div>
-          ))}
-        </div>
+        <div style={{ flex: 1 }}>
+          {/* Pass/fail badge */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '4px 14px', borderRadius: '999px',
+            background: passed ? '#dcfce7' : '#fee2e2',
+            color: passed ? '#15803d' : '#b91c1c',
+            fontWeight: 700, fontSize: '13px', marginBottom: '12px',
+          }}>
+            {passed ? '✓ LULUS' : '✗ TIDAK LULUS'}
+          </div>
 
-        {/* Details row */}
-        <div className="flex items-center justify-between text-xs text-gray-400 mb-5 px-1">
-          <span>{result.total_questions} soal</span>
-          <span>Waktu: {formatDuration(result.time_used_seconds)}</span>
-          <span>{submittedDate}</span>
-        </div>
-
-        {/* Student info */}
-        <div className="bg-gray-50 rounded-xl p-4 text-sm border border-gray-100">
-          <p className="font-bold text-gray-800 text-base">{result.student?.full_name}</p>
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-gray-500 text-xs">
-            <span>🏫 {result.student?.school}</span>
-            <span>📚 Kelas {result.student?.class}</span>
-            <span>🪪 NIS: {result.student?.nis}</span>
+          {/* Stats row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '8px' }}>
+            {[
+              { label: 'Benar', value: result.correct_count, bg: '#f0fdf4', color: '#15803d' },
+              { label: 'Salah', value: result.wrong_count, bg: '#fff1f2', color: '#b91c1c' },
+              { label: 'Kosong', value: result.unanswered_count, bg: '#f9fafb', color: '#6b7280' },
+              { label: 'Nilai Lulus', value: `${result.passing_score}%`, bg: '#eff6ff', color: '#1d4ed8' },
+            ].map((s) => (
+              <div key={s.label} style={{ background: s.bg, borderRadius: '8px', padding: '8px', textAlign: 'center' }}>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: s.color }}>{s.value}</div>
+                <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '2px' }}>{s.label}</div>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
 
-        {/* Footer watermark */}
-        <p className="text-center text-xs text-gray-300 mt-4">
-          Platform Tryout Online
-        </p>
+      {/* ── META ROW ── */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between',
+        fontSize: '11px', color: '#9ca3af',
+        borderTop: '1px solid #f3f4f6', borderBottom: '1px solid #f3f4f6',
+        padding: '8px 0', marginBottom: '16px',
+      }}>
+        <span>{result.total_questions} soal</span>
+        <span>Waktu: {formatDuration(result.time_used_seconds)}</span>
+        <span>{submittedDate}</span>
+      </div>
+
+      {/* ── STUDENT INFO ── */}
+      <div style={{
+        background: '#f9fafb', border: '1px solid #e5e7eb',
+        borderRadius: '10px', padding: '14px 16px', marginBottom: '24px',
+      }}>
+        <div style={{ fontWeight: 700, fontSize: '15px', color: '#111827' }}>
+          {result.student?.full_name}
+        </div>
+        <div style={{ display: 'flex', gap: '16px', marginTop: '4px', fontSize: '12px', color: '#6b7280' }}>
+          <span>🏫 {result.student?.school}</span>
+          <span>📚 Kelas {result.student?.class}</span>
+          <span>🪪 NIS: {result.student?.nis}</span>
+        </div>
+      </div>
+
+      {/* ── QUESTIONS & ANSWERS ── */}
+      {hasAnswers && (
+        <>
+          <div style={{
+            fontSize: '14px', fontWeight: 700, color: '#111827',
+            borderBottom: '2px solid #e5e7eb', paddingBottom: '8px', marginBottom: '16px',
+          }}>
+            Tinjauan Jawaban ({result.answers!.length} soal)
+          </div>
+
+          {result.answers!.map((a) => {
+            const isUnanswered = a.selected_answer === null
+            const isCorrect = a.is_correct === true
+            const borderColor = isUnanswered ? '#e5e7eb' : isCorrect ? '#86efac' : '#fca5a5'
+            const bgColor = isUnanswered ? '#f9fafb' : isCorrect ? '#f0fdf4' : '#fff1f2'
+            const statusLabel = isUnanswered ? 'Tidak Dijawab' : isCorrect ? 'Benar ✓' : 'Salah ✗'
+            const statusColor = isUnanswered ? '#6b7280' : isCorrect ? '#15803d' : '#b91c1c'
+            const statusBg = isUnanswered ? '#f3f4f6' : isCorrect ? '#dcfce7' : '#fee2e2'
+
+            return (
+              <div key={a.question_id} style={{
+                border: `1.5px solid ${borderColor}`,
+                background: bgColor,
+                borderRadius: '10px',
+                padding: '14px 16px',
+                marginBottom: '12px',
+                pageBreakInside: 'avoid',
+              }}>
+                {/* Question header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#6b7280' }}>
+                    Soal {a.index}
+                  </span>
+                  <span style={{
+                    fontSize: '11px', fontWeight: 700,
+                    padding: '2px 10px', borderRadius: '999px',
+                    background: statusBg, color: statusColor,
+                  }}>
+                    {statusLabel}
+                  </span>
+                </div>
+
+                {/* Question text */}
+                <p style={{ fontWeight: 600, color: '#111827', marginBottom: '10px', lineHeight: 1.5 }}>
+                  {a.question}
+                </p>
+
+                {/* Options */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px' }}>
+                  {a.options.map((opt) => {
+                    const isSel = a.selected_answer === opt.key
+                    const isCorr = a.correct_answer === opt.key
+                    const optBg = isCorr ? '#dcfce7' : isSel && !isCorr ? '#fee2e2' : '#fff'
+                    const optBorder = isCorr ? '#4ade80' : isSel && !isCorr ? '#f87171' : '#e5e7eb'
+                    const optColor = isCorr ? '#15803d' : isSel && !isCorr ? '#b91c1c' : '#374151'
+                    const circBg = isCorr ? '#16a34a' : isSel && !isCorr ? '#ef4444' : '#e5e7eb'
+                    const circColor = isCorr || (isSel && !isCorr) ? '#fff' : '#6b7280'
+                    return (
+                      <div key={opt.key} style={{
+                        display: 'flex', alignItems: 'flex-start', gap: '8px',
+                        background: optBg, border: `1px solid ${optBorder}`,
+                        borderRadius: '7px', padding: '7px 10px',
+                      }}>
+                        <span style={{
+                          width: '20px', height: '20px', borderRadius: '50%',
+                          background: circBg, color: circColor,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '10px', fontWeight: 700, flexShrink: 0,
+                        }}>
+                          {opt.key}
+                        </span>
+                        <span style={{ color: optColor, fontWeight: isCorr ? 600 : 400, fontSize: '12px', lineHeight: 1.4 }}>
+                          {opt.text}
+                        </span>
+                        {isCorr && (
+                          <span style={{ marginLeft: 'auto', color: '#16a34a', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>✓</span>
+                        )}
+                        {isSel && !isCorr && (
+                          <span style={{ marginLeft: 'auto', color: '#ef4444', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>✗</span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Your answer vs correct (only when wrong) */}
+                {!isUnanswered && !isCorrect && (
+                  <div style={{ display: 'flex', gap: '20px', fontSize: '11px', marginBottom: '8px' }}>
+                    <div>
+                      <div style={{ color: '#9ca3af' }}>Jawaban kamu</div>
+                      <div style={{ fontWeight: 700, color: '#dc2626' }}>{a.selected_answer}</div>
+                    </div>
+                    <div>
+                      <div style={{ color: '#9ca3af' }}>Jawaban benar</div>
+                      <div style={{ fontWeight: 700, color: '#16a34a' }}>{a.correct_answer}</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Explanation */}
+                <div style={{
+                  background: '#fffbeb', border: '1px solid #fde68a',
+                  borderRadius: '7px', padding: '8px 12px',
+                }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#92400e', marginBottom: '3px' }}>
+                    Penjelasan
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#78350f', lineHeight: 1.5 }}>
+                    {a.explanation}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </>
+      )}
+
+      {/* ── FOOTER ── */}
+      <div style={{
+        textAlign: 'center', fontSize: '10px', color: '#d1d5db',
+        marginTop: '20px', paddingTop: '12px', borderTop: '1px solid #f3f4f6',
+      }}>
+        Platform Tryout Online
       </div>
     </div>
   )
@@ -219,10 +353,10 @@ function DownloadButtons({
     try {
       if (type === 'png') {
         await downloadAsPng(printRef.current, `${filename}.png`)
-        toast.success('Hasil berhasil diunduh sebagai gambar PNG!')
+        toast.success('Hasil & soal berhasil diunduh sebagai PNG!')
       } else {
         await downloadAsPdf(printRef.current, `${filename}.pdf`)
-        toast.success('Hasil berhasil diunduh sebagai PDF!')
+        toast.success('Hasil & soal berhasil diunduh sebagai PDF!')
       }
     } catch {
       toast.error('Gagal mengunduh. Coba lagi.')
@@ -230,10 +364,17 @@ function DownloadButtons({
     setDownloading(null)
   }
 
+  const hasAnswers = result.show_explanations && result.answers && result.answers.length > 0
+
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 text-center">
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 text-center">
         Unduh Hasil
+      </p>
+      <p className="text-xs text-gray-400 text-center mb-3">
+        {hasAnswers
+          ? 'Termasuk ringkasan nilai + semua soal & jawaban'
+          : 'Ringkasan nilai dan data peserta'}
       </p>
       <div className="grid grid-cols-2 gap-2">
         {/* PNG */}
@@ -261,7 +402,7 @@ function DownloadButtons({
           </div>
           <div>
             <p className="text-sm font-bold text-violet-700">PNG</p>
-            <p className="text-xs text-violet-500">Gambar</p>
+            <p className="text-xs text-violet-500">Gambar panjang</p>
           </div>
         </button>
 
@@ -290,9 +431,83 @@ function DownloadButtons({
           </div>
           <div>
             <p className="text-sm font-bold text-rose-700">PDF</p>
-            <p className="text-xs text-rose-500">Dokumen</p>
+            <p className="text-xs text-rose-500">Multi-halaman</p>
           </div>
         </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Score card shown on-screen ────────────────────────────────────────────
+function ResultCard({ result }: { result: ResultData }) {
+  const passed = result.passed
+  const submittedDate = result.submitted_at
+    ? new Date(result.submitted_at).toLocaleString('id-ID', {
+        day: '2-digit', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      })
+    : '-'
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
+      <div className={cn(
+        'px-6 py-5 text-center',
+        passed ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-red-500 to-rose-600'
+      )}>
+        <p className="text-white/80 text-xs font-medium uppercase tracking-widest mb-1">Hasil Tryout</p>
+        <h1 className="text-white text-lg font-bold leading-snug">{result.exam_title}</h1>
+      </div>
+
+      <div className="p-6">
+        <div className="flex flex-col items-center mb-6">
+          <div className={cn(
+            'w-28 h-28 rounded-full border-4 flex flex-col items-center justify-center mb-3',
+            passed ? 'border-green-400 bg-green-50' : 'border-red-400 bg-red-50'
+          )}>
+            <span className={cn('text-4xl font-black leading-none', passed ? 'text-green-600' : 'text-red-600')}>
+              {Math.round(result.score ?? 0)}
+            </span>
+            <span className="text-xs text-gray-400 mt-1">dari 100</span>
+          </div>
+          <span className={cn(
+            'inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold',
+            passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+          )}>
+            {passed ? '✓ LULUS' : '✗ TIDAK LULUS'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-4 gap-2 mb-5">
+          {[
+            { label: 'Benar', value: result.correct_count, bg: 'bg-green-50', text: 'text-green-700' },
+            { label: 'Salah', value: result.wrong_count, bg: 'bg-red-50', text: 'text-red-600' },
+            { label: 'Kosong', value: result.unanswered_count, bg: 'bg-gray-50', text: 'text-gray-500' },
+            { label: 'Nilai Lulus', value: `${result.passing_score}%`, bg: 'bg-blue-50', text: 'text-blue-700' },
+          ].map((s) => (
+            <div key={s.label} className={cn('rounded-xl p-3 text-center', s.bg)}>
+              <p className={cn('text-xl font-bold', s.text)}>{s.value}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between text-xs text-gray-400 mb-5 px-1">
+          <span>{result.total_questions} soal</span>
+          <span>Waktu: {formatDuration(result.time_used_seconds)}</span>
+          <span>{submittedDate}</span>
+        </div>
+
+        <div className="bg-gray-50 rounded-xl p-4 text-sm border border-gray-100">
+          <p className="font-bold text-gray-800 text-base">{result.student?.full_name}</p>
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-gray-500 text-xs">
+            <span>🏫 {result.student?.school}</span>
+            <span>📚 Kelas {result.student?.class}</span>
+            <span>🪪 NIS: {result.student?.nis}</span>
+          </div>
+        </div>
+
+        <p className="text-center text-xs text-gray-300 mt-4">Platform Tryout Online</p>
       </div>
     </div>
   )
@@ -348,10 +563,12 @@ export default function ResultPage() {
 
   return (
     <div className="min-h-screen py-8 px-4">
-      <div className="max-w-2xl mx-auto space-y-4">
+      {/* Hidden full document (what actually gets captured for download) */}
+      <PrintDocument result={result} printRef={printRef} />
 
-        {/* Result card — also used as download target */}
-        <ResultCard result={result} printRef={printRef} />
+      <div className="max-w-2xl mx-auto space-y-4">
+        {/* On-screen score card */}
+        <ResultCard result={result} />
 
         {/* Download buttons */}
         <DownloadButtons result={result} printRef={printRef} />
@@ -378,7 +595,7 @@ export default function ResultPage() {
           </Button>
         </div>
 
-        {/* Answer Review */}
+        {/* On-screen answer review */}
         {showReview && result.answers && (
           <div className="space-y-4">
             <h2 className="text-base font-bold text-gray-800 px-1">Tinjauan Jawaban</h2>
@@ -397,7 +614,7 @@ export default function ResultPage() {
   )
 }
 
-// ─── Answer card ───────────────────────────────────────────────────────────
+// ─── On-screen answer card ─────────────────────────────────────────────────
 function AnswerCard({
   answer: a,
   imageError,
@@ -438,17 +655,12 @@ function AnswerCard({
           const isSelected = a.selected_answer === opt.key
           const isCorrectOpt = a.correct_answer === opt.key
           return (
-            <div
-              key={opt.key}
-              className={cn(
-                'flex items-start gap-2.5 p-2.5 rounded-lg border text-sm',
-                isCorrectOpt
-                  ? 'border-green-400 bg-green-50'
-                  : isSelected && !isCorrectOpt
-                  ? 'border-red-400 bg-red-50'
-                  : 'border-gray-200 bg-white'
-              )}
-            >
+            <div key={opt.key} className={cn(
+              'flex items-start gap-2.5 p-2.5 rounded-lg border text-sm',
+              isCorrectOpt ? 'border-green-400 bg-green-50'
+              : isSelected && !isCorrectOpt ? 'border-red-400 bg-red-50'
+              : 'border-gray-200 bg-white'
+            )}>
               <span className={cn(
                 'flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
                 isCorrectOpt ? 'bg-green-500 text-white'
